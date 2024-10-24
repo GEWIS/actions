@@ -1,0 +1,41 @@
+name: "Build and Lint TypeScript Project"
+description: "Reusable action to build and lint a TypeScript project using Yarn."
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: "The directory where the TypeScript project is located."
+        type: string
+        required: false
+        default: "."
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Install dependencies
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: install
+          dir: ${{ inputs.working-directory }}
+
+      - name: Lint the project
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: lint
+          dir: ${{ inputs.working-directory }}
+
+      - name: Build the project
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: build
+          dir: ${{ inputs.working-directory }}

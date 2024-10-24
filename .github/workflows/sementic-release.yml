@@ -1,0 +1,100 @@
+name: Semantic Release
+
+on:
+  workflow_call:
+    inputs:
+      projects:
+        required: true
+        description: "Comma-separated list of projects to release"
+        type: string
+      docker_registry:
+        required: true
+        type: string
+      env_file:
+        required: true
+        type: string
+      docker_tags:
+        required: true
+        description: "Comma-separated list of Docker tags corresponding to each project"
+        type: string
+    secrets:
+      GITHUB_TOKEN:
+        required: true
+      REGISTRY_USERNAME:
+        required: true
+      REGISTRY_PASSWORD:
+        required: true
+
+jobs:
+  versioning:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    outputs:
+      next_version: ${{ steps.semantic.outputs.new_release_version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Semantic Release
+        uses: cycjimmy/semantic-release-action@v4
+        id: semantic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release:
+    runs-on: ubuntu-latest
+    needs: versioning
+    if: ${{ needs.versioning.outputs.next_version != '' }}
+    container:
+      image: docker:dind
+    strategy:
+      matrix:
+        project: ${{ fromJson(inputs.projects) }}
+        docker_tag: ${{ fromJson(inputs.docker_tags) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up environment
+        env:
+          ENV_FILE: ${{ inputs.env_file }}
+        run: |
+          echo "${ENV_FILE}" > ./apps/${{ matrix.project }}/.env
+
+      - name: Get Docker meta (for tags)
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ inputs.docker_registry }}/${{ matrix.docker_tag }}
+          tags: |
+            ${{ needs.versioning.outputs.next_version }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to SudoSOS Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ inputs.docker_registry }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          file: apps/${{ matrix.project }}/Dockerfile
