@@ -1,0 +1,38 @@
+name: Docker Build
+
+on:
+  workflow_call:
+    inputs:
+      projects:
+        required: true
+        description: "Comma-separated list of projects to build"
+        type: string
+
+jobs:
+  dockerize:
+    runs-on: ubuntu-latest
+    container:
+      image: docker:dind
+    strategy:
+      matrix:
+        project: ${{ fromJson(inputs.projects) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          platforms: linux/amd64
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          file: ${{ matrix.project }}/Dockerfile
