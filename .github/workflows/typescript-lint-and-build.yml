@@ -5,35 +5,43 @@ on:
   workflow_call:
     inputs:
       working-directory:
+        required: false
         description: "The directory where the TypeScript project is located."
         type: string
-        required: false
         default: "."
       node-version:
-        type: choice
+        required: true
+        type: string
         description: "The node version required for the TypeScript project."
-        options:
-          - 20.x
-          - 18.x
-          - 22.x
+        default: "20.x"
+        # options:
+        #  - 22.x
+        #  - 20.x
+        #  - 18.x
       package-manager:
+        required: true
+        type: string
         description: "The package manager to use for the TypeScript project."
-        type: choice
-        options:
-          - yarn
-          - npm
+        default: "npm"
+        # options:
+        #  - yarn
+        #  - npm
       step-lint:
         type: boolean
         description: "Use the lint step."
+        default: true
       step-format:
         type: boolean
         description: "Use the format step."
+        default: false
       step-test:
         type: boolean
         description: "Use the test step."
+        default: false
       step-build:
         type: boolean
         description: "Use the build step."
+        default: true
 
 jobs:
   build-and-lint-yarn:
