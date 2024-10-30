@@ -26,6 +26,14 @@ on:
         # options:
         #  - yarn
         #  - npm
+      prepare-command:
+        required: false
+        type: string
+        description: "Command to run directly after checkout."
+      cleanup-command:
+        required: false
+        type: string
+        description: "Command to run after the workflow (even if failed)."
       step-lint:
         type: boolean
         description: "Use the lint step."
@@ -51,10 +59,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Prepare
+        run: ${{ inputs.prepare-command }}
+        if: ${{ inputs.prepare-command != '' }}
+
       - name: Set Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ inputs.package-manager }}
+          node-version: ${{ inputs.node-version }}
 
       - name: Install dependencies
         uses: borales/actions-yarn@v4
@@ -90,6 +102,10 @@ jobs:
           dir: ${{ inputs.working-directory }}
         if: ${{ inputs.step-build }}
 
+      - name: Cleanup 
+        run: ${{ inputs.cleanup-command }}
+        if: ${{ inputs.cleanup-command != '' && always() }}
+
   build-and-lint-npm:
     if: ${{ inputs.package-manager }} == 'npm'
     runs-on: ubuntu-latest
@@ -97,10 +113,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Prepare
+        run: ${{ inputs.prepare-command }}
+        if: ${{ inputs.prepare-command != '' }}
+
       - name: Set Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ inputs.package-manager }}
+          node-version: ${{ inputs.node-version }}
 
       - name: Install dependencies
         working-directory: ${{ inputs.working-directory }}
@@ -125,3 +145,7 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: npm run build
         if: ${{ inputs.step-build }}
+
+      - name: Cleanup 
+        run: ${{ inputs.cleanup-command }}
+        if: ${{ inputs.cleanup-command != '' && always() }}
