@@ -53,7 +53,7 @@ on:
 
 jobs:
   build-and-lint-yarn:
-    if: ${{ inputs.package-manager }} == 'yarn'
+    if: ${{ inputs.package-manager == 'yarn' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -107,7 +107,7 @@ jobs:
         if: ${{ inputs.cleanup-command != '' && always() }}
 
   build-and-lint-npm:
-    if: ${{ inputs.package-manager }} == 'npm'
+    if: ${{ inputs.package-manager == 'npm' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
