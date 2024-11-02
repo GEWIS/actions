@@ -14,9 +14,9 @@ on:
         required: false
         description: "Contents of the ENV file to use during building, should only be used as an exception."
         type: string
-      docker_tags:
+      docker_paths:
         required: true
-        description: "Comma-separated list of Docker tags corresponding to each project"
+        description: "Comma-separated list of Docker paths corresponding to each project"
         type: string
     secrets:
       GITHUB_TOKEN:
