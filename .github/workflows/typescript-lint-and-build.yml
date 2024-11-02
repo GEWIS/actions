@@ -34,19 +34,19 @@ on:
         required: false
         type: string
         description: "Command to run after the workflow (even if failed)."
-      step-lint:
+      lint:
         type: boolean
         description: "Use the lint step."
         default: true
-      step-format:
+      format:
         type: boolean
         description: "Use the format step."
         default: false
-      step-test:
+      test:
         type: boolean
         description: "Use the test step."
         default: false
-      step-build:
+      build:
         type: boolean
         description: "Use the build step."
         default: true
@@ -79,28 +79,28 @@ jobs:
         with:
           cmd: lint
           dir: ${{ inputs.working-directory }}
-        if: ${{ inputs.step-lint }}
+        if: ${{ inputs.lint }}
 
       - name: Format the project
         uses: borales/actions-yarn@v4
         with:
           cmd: format
           dir: ${{ inputs.working-directory }}
-        if: ${{ inputs.step-format }}
+        if: ${{ inputs.format }}
 
       - name: Test the project
         uses: borales/actions-yarn@v4
         with:
           cmd: test
           dir: ${{ inputs.working-directory }}
-        if: ${{ inputs.step-test }}
+        if: ${{ inputs.test }}
 
       - name: Build the project
         uses: borales/actions-yarn@v4
         with:
           cmd: build
           dir: ${{ inputs.working-directory }}
-        if: ${{ inputs.step-build }}
+        if: ${{ inputs.build }}
 
       - name: Cleanup 
         run: ${{ inputs.cleanup-command }}
@@ -129,22 +129,22 @@ jobs:
       - name: Lint the project
         working-directory: ${{ inputs.working-directory }}
         run: npm run lint
-        if: ${{ inputs.step-lint }}
+        if: ${{ inputs.lint }}
 
       - name: Format the project
         working-directory: ${{ inputs.working-directory }}
         run: npm run format
-        if: ${{ inputs.step-format }}
+        if: ${{ inputs.format }}
 
       - name: Test the project
         working-directory: ${{ inputs.working-directory }}
         run: npm run test
-        if: ${{ inputs.step-test }}
+        if: ${{ inputs.test }}
 
       - name: Build the project
         working-directory: ${{ inputs.working-directory }}
         run: npm run build
-        if: ${{ inputs.step-build }}
+        if: ${{ inputs.build }}
 
       - name: Cleanup 
         run: ${{ inputs.cleanup-command }}
