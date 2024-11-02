@@ -26,6 +26,14 @@ on:
         # options:
         #  - yarn
         #  - npm
+      artifact-name:
+        required: false
+        type: string
+        description: "Name of artifact to use"
+      artifact-path:
+        required: false
+        type: string
+        description: "Path to place artifact"
       prepare-command:
         required: false
         type: string
@@ -58,6 +66,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: ${{ inputs.artifact-path }}
+        if: ${{ inputs.artifact-name != '' }}
 
       - name: Prepare
         run: ${{ inputs.prepare-command }}
@@ -112,6 +127,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: ${{ inputs.artifact-path }}
+        if: ${{ inputs.artifact-name != '' }}
 
       - name: Prepare
         run: ${{ inputs.prepare-command }}
