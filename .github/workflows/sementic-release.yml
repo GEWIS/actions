@@ -14,9 +14,9 @@ on:
         required: false
         description: "Contents of the ENV file to use during building, should only be used as an exception."
         type: string
-      docker_tags:
+      docker_paths:
         required: true
-        description: "Comma-separated list of Docker tags corresponding to each project"
+        description: "Comma-separated list of Docker paths corresponding to each project"
         type: string
     secrets:
       GITHUB_TOKEN:
@@ -41,7 +41,7 @@ jobs:
     strategy:
       matrix:
         project: ${{ fromJson(inputs.projects) }}
-        docker_tag: ${{ fromJson(inputs.docker_tags) }}
+        docker_path: ${{ fromJson(inputs.docker_paths) }}
 
     steps:
       - name: Checkout repository
@@ -59,7 +59,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ inputs.docker_registry }}/${{ matrix.docker_tag }}
+            ${{ inputs.docker_registry }}/${{ matrix.docker_path }}
           tags: |
             ${{ needs.versioning.outputs.next_version }}
 
