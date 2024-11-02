@@ -34,19 +34,19 @@ on:
         required: false
         type: string
         description: "Command to run after the workflow (even if failed)."
-      step-lint:
+      lint:
         type: boolean
         description: "Use the lint step."
         default: true
-      step-format:
+      format:
         type: boolean
         description: "Use the format step."
         default: false
-      step-test:
+      test:
         type: boolean
         description: "Use the test step."
         default: false
-      step-build:
+      build:
         type: boolean
         description: "Use the build step."
         default: true
