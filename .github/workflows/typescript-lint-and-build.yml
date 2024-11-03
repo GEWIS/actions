@@ -10,7 +10,7 @@ on:
         type: string
         default: "."
       node-version:
-        required: true
+        required: false
         type: string
         description: "The node version required for the TypeScript project."
         default: "20.x"
@@ -19,7 +19,7 @@ on:
         #  - 20.x
         #  - 18.x
       package-manager:
-        required: true
+        required: false
         type: string
         description: "The package manager to use for the TypeScript project."
         default: "npm"
