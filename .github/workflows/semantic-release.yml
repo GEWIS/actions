@@ -19,8 +19,6 @@ on:
         description: "Comma-separated list of Docker paths corresponding to each project"
         type: string
     secrets:
-      GITHUB_TOKEN:
-        required: true
       REGISTRY_USERNAME:
         required: true
       REGISTRY_PASSWORD:
@@ -29,8 +27,7 @@ on:
 jobs:
   versioning:
     uses: ./.github/workflows/versioning.yml
-    secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    secrets: inherit
 
   release:
     runs-on: ubuntu-latest
