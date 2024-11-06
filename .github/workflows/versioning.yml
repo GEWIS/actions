@@ -2,6 +2,10 @@ name: Versioning
 
 on:
   workflow_call:
+    outputs:
+      next_version:
+        description: "Next version for tagging and releasing"
+        value: ${{ jobs.versioning.outputs.next_version }}
 
 jobs:
   versioning:
