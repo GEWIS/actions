@@ -1,0 +1,74 @@
+name: Semantic Release
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: false
+        type: string
+        description: 'The node version required for the project.'
+        default: '20.x'
+        # options:
+        #  - 22.x
+        #  - 20.x
+        #  - 18.x
+      version:
+        required: true
+        description: 'Version of the package(s)'
+        type: string
+      lerna:
+        required: false
+        description: 'Whether project is a lerna project'
+        type: string
+
+jobs:
+  publish-npm:
+    runs-on: ubuntu-latest
+    if: ${{ inputs.lerna != 'true' && inputs.version != '' }}
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@gewis'
+
+      - run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+  publish-npm-lerna:
+    runs-on: ubuntu-latest
+    if: ${{ inputs.lerna == 'true' && inputs.version != '' }}
+    permissions:
+      packages: write
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Git Config
+        run: git config user.email 'github-actions@github.com' && git config user.name 'github-actions'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@gewis'
+
+      - name: Lerna Publish
+        run: npx --yes lerna version ${{ inputs.version }} --amend --yes && npx lerna publish from-git --yes
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Tags
+        run: git push --force-with-lease --follow-tags
