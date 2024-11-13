@@ -2,6 +2,11 @@ name: Versioning
 
 on:
   workflow_call:
+    inputs:
+      dry-run:
+        required: false
+        description: "Whether to perform versioning without making a release"
+        type: string
     outputs:
       next_version:
         description: "Next version for tagging and releasing"
@@ -23,5 +28,7 @@ jobs:
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@v4
         id: semantic
+        with:
+          dry_run: ${{ inputs.dry-run }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
