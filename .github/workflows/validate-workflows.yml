@@ -1,9 +1,9 @@
-name: "Validate Workflow Files"
+name: 'Validate Workflow Files'
 
 on:
   push:
     paths:
-      - ".github/workflows/*.yml"
+      - '.github/workflows/*.yml'
 
 jobs:
   validate-workflows:
