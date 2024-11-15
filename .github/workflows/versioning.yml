@@ -5,12 +5,12 @@ on:
     inputs:
       dry-run:
         required: false
-        description: "Whether to perform versioning without making a release"
+        description: 'Whether to perform versioning without making a release'
         type: string
     outputs:
-      next_version:
-        description: "Next version for tagging and releasing"
-        value: ${{ jobs.versioning.outputs.next_version }}
+      next-version:
+        description: 'Next version for tagging and releasing'
+        value: ${{ jobs.versioning.outputs.next-version }}
 
 jobs:
   versioning:
@@ -20,7 +20,7 @@ jobs:
       pull-requests: write
       issues: write
     outputs:
-      next_version: ${{ steps.semantic.outputs.new_release_version }}
+      next-version: ${{ steps.semantic.outputs.new_release_version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

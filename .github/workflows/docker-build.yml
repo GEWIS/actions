@@ -5,7 +5,7 @@ on:
     inputs:
       projects:
         required: true
-        description: "Comma-separated list of projects to build"
+        description: 'Comma-separated list of projects to build'
         type: string
 
 jobs:

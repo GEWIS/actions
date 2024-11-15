@@ -1,4 +1,4 @@
-name: TypeScript Lint and Build with Yarn
+name: TypeScript Lint and Build with NPM
 
 on:
   workflow_call:
@@ -45,7 +45,7 @@ on:
         default: true
 
 jobs:
-  yarn-steps:
+  npm-steps:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -68,37 +68,27 @@ jobs:
           node-version: ${{ inputs.node-version }}
 
       - name: Install dependencies
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: install
-          dir: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.working-directory }}
+        run: npm install
 
       - name: Lint the project
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: lint
-          dir: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.working-directory }}
+        run: npm run lint
         if: ${{ inputs.lint }}
 
       - name: Format the project
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: format
-          dir: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.working-directory }}
+        run: npm run format
         if: ${{ inputs.format }}
 
       - name: Test the project
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: test
-          dir: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.working-directory }}
+        run: npm run test
         if: ${{ inputs.test }}
 
       - name: Build the project
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: build
-          dir: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.working-directory }}
+        run: npm run build
         if: ${{ inputs.build }}
 
       - name: Cleanup

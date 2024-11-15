@@ -1,4 +1,4 @@
-name: Semantic Release
+name: NPM Release
 
 on:
   workflow_call:
@@ -6,12 +6,8 @@ on:
       node-version:
         required: false
         type: string
-        description: 'The node version required for the project.'
+        description: 'The node version required for the project'
         default: '20.x'
-        # options:
-        #  - 22.x
-        #  - 20.x
-        #  - 18.x
       version:
         required: true
         description: 'Version of the package(s)'
@@ -34,13 +30,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: ${{ inputs.node-version }}
           registry-url: 'https://npm.pkg.github.com'
           scope: '@gewis'
 
-      - run: npm publish --access public
+      - name: Publish
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   
@@ -59,9 +57,10 @@ jobs:
       - name: Git Config
         run: git config user.email 'github-actions@github.com' && git config user.name 'github-actions'
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: ${{ inputs.node-version }}
           registry-url: 'https://npm.pkg.github.com'
           scope: '@gewis'
 
