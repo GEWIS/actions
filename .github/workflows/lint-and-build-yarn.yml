@@ -1,30 +1,16 @@
-name: Build and Lint TypeScript Project
+name: TypeScript Lint and Build with Yarn
 
 on:
   workflow_call:
     inputs:
       working-directory:
         required: false
-        description: "The directory where the TypeScript project is located."
         type: string
         default: "."
       node-version:
         required: false
         type: string
-        description: "The node version required for the TypeScript project."
         default: "20.x"
-        # options:
-        #  - 22.x
-        #  - 20.x
-        #  - 18.x
-      package-manager:
-        required: false
-        type: string
-        description: "The package manager to use for the TypeScript project."
-        default: "npm"
-        # options:
-        #  - yarn
-        #  - npm
       artifact-name:
         required: false
         type: string
@@ -43,24 +29,23 @@ on:
         description: "Command to run after the workflow (even if failed)."
       lint:
         type: boolean
-        description: "Use the lint step."
+        description: "Run the lint step."
         default: true
       format:
         type: boolean
-        description: "Use the format step."
+        description: "Run the format step."
         default: false
       test:
         type: boolean
-        description: "Use the test step."
+        description: "Run the test step."
         default: false
       build:
         type: boolean
-        description: "Use the build step."
+        description: "Run the build step."
         default: true
 
 jobs:
-  build-and-lint-yarn:
-    if: ${{ inputs.package-manager == 'yarn' }}
+  yarn-steps:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -116,57 +101,6 @@ jobs:
           dir: ${{ inputs.working-directory }}
         if: ${{ inputs.build }}
 
-      - name: Cleanup 
-        run: ${{ inputs.cleanup-command }}
-        if: ${{ inputs.cleanup-command != '' && always() }}
-
-  build-and-lint-npm:
-    if: ${{ inputs.package-manager == 'npm' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ inputs.artifact-name }}
-          path: ${{ inputs.artifact-path }}
-        if: ${{ inputs.artifact-name != '' }}
-
-      - name: Prepare
-        run: ${{ inputs.prepare-command }}
-        if: ${{ inputs.prepare-command != '' }}
-
-      - name: Set Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ inputs.node-version }}
-
-      - name: Install dependencies
-        working-directory: ${{ inputs.working-directory }}
-        run: npm install
-
-      - name: Lint the project
-        working-directory: ${{ inputs.working-directory }}
-        run: npm run lint
-        if: ${{ inputs.lint }}
-
-      - name: Format the project
-        working-directory: ${{ inputs.working-directory }}
-        run: npm run format
-        if: ${{ inputs.format }}
-
-      - name: Test the project
-        working-directory: ${{ inputs.working-directory }}
-        run: npm run test
-        if: ${{ inputs.test }}
-
-      - name: Build the project
-        working-directory: ${{ inputs.working-directory }}
-        run: npm run build
-        if: ${{ inputs.build }}
-
-      - name: Cleanup 
+      - name: Cleanup
         run: ${{ inputs.cleanup-command }}
         if: ${{ inputs.cleanup-command != '' && always() }}
