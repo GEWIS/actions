@@ -1,5 +1,4 @@
-name: "Build and Lint TypeScript Project"
-description: "Reusable action to build and lint a TypeScript project."
+name: Build and Lint TypeScript Project
 
 on:
   workflow_call:

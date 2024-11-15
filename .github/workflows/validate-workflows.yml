@@ -1,0 +1,17 @@
+name: "Validate Workflow Files"
+
+on:
+  push:
+    paths:
+      - ".github/workflows/*.yml"
+
+jobs:
+  validate-workflows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '^1.23.0'
+      - run: go install github.com/rhysd/actionlint/cmd/actionlint@latest
+      - run: actionlint
