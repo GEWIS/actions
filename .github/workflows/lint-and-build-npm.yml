@@ -6,42 +6,42 @@ on:
       working-directory:
         required: false
         type: string
-        default: "."
+        default: '.'
       node-version:
         required: false
         type: string
-        default: "20.x"
+        default: '20.x'
       artifact-name:
         required: false
         type: string
-        description: "Name of artifact to use"
+        description: 'Name of artifact to use'
       artifact-path:
         required: false
         type: string
-        description: "Path to place artifact"
+        description: 'Path to place artifact'
       prepare-command:
         required: false
         type: string
-        description: "Command to run directly after checkout."
+        description: 'Command to run directly after checkout.'
       cleanup-command:
         required: false
         type: string
-        description: "Command to run after the workflow (even if failed)."
+        description: 'Command to run after the workflow (even if failed).'
       lint:
         type: boolean
-        description: "Run the lint step."
+        description: 'Run the lint step.'
         default: true
       format:
         type: boolean
-        description: "Run the format step."
+        description: 'Run the format step.'
         default: false
       test:
         type: boolean
-        description: "Run the test step."
+        description: 'Run the test step.'
         default: false
       build:
         type: boolean
-        description: "Run the build step."
+        description: 'Run the build step.'
         default: true
 
 jobs:
