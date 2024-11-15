@@ -14,13 +14,13 @@ Workflow for linting, formatting, testing and building projects. Can be used for
 ```yaml
 jobs:
   build-and-lint-yarn:
-    uses: GEWIS/actions/.github/workflows/lint-and-build-npm.yml@v1.0.0
+    uses: GEWIS/actions/.github/workflows/lint-and-build-npm.yml@v1
     with:
       node-version: '22.x'
       format: true
 
   build-and-lint-npm:
-    uses: GEWIS/actions/.github/workflows/lint-and-build-yarn.yml@v1.0.0
+    uses: GEWIS/actions/.github/workflows/lint-and-build-yarn.yml@v1
     with:
       node-version: '20.x'
       test: true
@@ -47,7 +47,7 @@ Workflow for building a docker image. Useful for, for example, testing if a cont
 ```yaml
 jobs:
   dockerize:
-    uses: GEWIS/actions/.github/workflows/docker-build.yml@v1.0.0
+    uses: GEWIS/actions/.github/workflows/docker-build.yml@v1
     with:
       projects: '["."]'
 ```
@@ -64,7 +64,7 @@ Workflow for building Docker images and releasing them. Can be used to push to G
 ```yaml
 jobs:
   build-and-lint:
-    uses: GEWIS/actions/.github/workflows/docker-release.yml@v1.0.0
+    uses: GEWIS/actions/.github/workflows/docker-release.yml@v1
     with:
       projects: '["."]'
       docker-registry: 'abc.docker-registry.gewis.nl'
@@ -97,7 +97,7 @@ Workflow for releasing a NPM package on GitHub.
 ```yaml
 jobs:
   build-and-lint:
-    uses: GEWIS/actions/.github/workflows/npm-release.yml@v1.0.0
+    uses: GEWIS/actions/.github/workflows/npm-release.yml@v1
     with:
       version: '4.0.40'
       lerna: 'true'
@@ -118,7 +118,7 @@ Workflow for versioning a project using `semantic-release-action`.
 ```yaml
 jobs:
   build-and-lint:
-    uses: GEWIS/actions/.github/workflows/versioning.yml@v1.0.0
+    uses: GEWIS/actions/.github/workflows/versioning.yml@v1
 ```
 
 ### Inputs
