@@ -1,0 +1,10 @@
+name: Versioning of the actions repository
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  versioning:
+    uses: GEWIS/actions/.github/workflows/versioning.yml@1.0.0
