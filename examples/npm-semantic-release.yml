@@ -1,0 +1,25 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+    push:
+      branches:
+        - 'main'
+    pull_request:
+      branches:
+        - 'main'
+
+jobs:
+  versioning:
+    uses: GEWIS/actions/.github/workflows/npm-release.yml@1.0.0
+    with:
+      dry-run: 'true',
+
+  publish-npm:
+    uses: GEWIS/actions/.github/workflows/npm-release.yml@1.0.0
+    needs: versioning
+    if: ${{ needs.versioning.outputs.next_version != '' }}
+    with:
+      node-version: '22.x'
+      version: ${{ needs.versioning.outputs.next_version }}
+      lerna: 'true'
