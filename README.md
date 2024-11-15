@@ -1,4 +1,8 @@
-# Actions
+# 🛠 Actions
+[![CI](https://github.com/GEWIS/actions/actions/workflows/validate-workflows.yml/badge.svg?branch=main)](https://github.com/GEWIS/actions/actions/workflows/ci.yml)
+[![Latest Release](https://img.shields.io/github/v/tag/GEWIS/actions?label=Latest)](https://github.com/GEWIS/actions/tags)
+![License](https://img.shields.io/github/license/GEWIS/actions)
+
 Common and Reusable GitHub Actions for the GEWIS organization.
 
 ## Docker build
