@@ -1,0 +1,13 @@
+name: Versioning of the actions repository
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  versioning:
+    uses: ./.github/workflows/versioning.yml
