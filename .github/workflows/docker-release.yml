@@ -63,7 +63,7 @@ jobs:
         run: |
           input="${{ matrix.docker-path }}"
           result="${input#*/}"
-          echo "{name}={part}" >> $result
+          echo "part=$result" >> "${GITHUB_OUTPUT}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
