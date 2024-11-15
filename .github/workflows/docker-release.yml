@@ -1,4 +1,4 @@
-name: Semantic Release
+name: Docker Release
 
 on:
   workflow_call:
@@ -11,17 +11,19 @@ on:
         required: true
         description: 'Version of the Docker release'
         type: string
-      docker_registry:
+      docker-registry:
         required: true
+        description: 'Docker registry to push the Docker image to'
         type: string
-      github_registry:
+      github-registry:
         required: false
+        description: 'Whether to push the image to the GitHub registry'
         type: string
-      env_file:
+      env-file:
         required: false
         description: 'Contents of the ENV file to use during building, should only be used as an exception.'
         type: string
-      docker_paths:
+      docker-paths:
         required: true
         description: 'Comma-separated list of Docker paths corresponding to each project'
         type: string
@@ -42,25 +44,25 @@ jobs:
     strategy:
       matrix:
         project: ${{ fromJson(inputs.projects) }}
-        docker_path: ${{ fromJson(inputs.docker_paths) }}
+        docker-path: ${{ fromJson(inputs.docker-paths) }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up environment
-        if: ${{ inputs.env_file != '' }}
+        if: ${{ inputs.env-file != '' }}
         env:
-          ENV_FILE: ${{ inputs.env_file }}
+          ENV_FILE: ${{ inputs.env-file }}
         run: |
           echo '${ENV_FILE}' > ${{ matrix.project }}/.env
 
       - name: Extract Image Name
         id: extract
         run: |
-          input="${{ matrix.docker_path }}"
-          result="${input#*/}"
-          echo "::set-output name=part::$result"
+          input='${{ matrix.docker-path }}'
+          result='${input#*/}'
+          echo '{name}={part}' >> $result
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -68,8 +70,8 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to Container (GitHub)
-        if: ${{ inputs.github_registry == 'true' }}
+      - name: Login to Registry (GitHub)
+        if: ${{ inputs.github-registry == 'true' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -77,7 +79,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and Push Docker Image (GitHub)
-        if: ${{ inputs.github_registry == 'true' }}
+        if: ${{ inputs.github-registry == 'true' }}
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -90,22 +92,22 @@ jobs:
           cache-to: type=gha,mode=max
           file: ${{ matrix.project }}/Dockerfile
 
-      - name: Login to Container (Registry)
+      - name: Login to Registry (Custom)
         uses: docker/login-action@v3
         with:
-          registry: ${{ inputs.docker_registry }}
+          registry: ${{ inputs.docker-registry }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: Build and Push Docker Image (Registry)
+      - name: Build and Push Docker Image (Custom)
         uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64
           push: true
           tags: |
-            ${{ inputs.docker_registry }}/${{ matrix.docker_path }}:latest
-            ${{ inputs.docker_registry }}/${{ matrix.docker_path }}:${{ inputs.version }}
+            ${{ inputs.docker-registry }}/${{ matrix.docker-path }}:latest
+            ${{ inputs.docker-registry }}/${{ matrix.docker-path }}:${{ inputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           file: ${{ matrix.project }}/Dockerfile
