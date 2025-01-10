@@ -92,7 +92,7 @@ jobs:
 | REGISTRY\_PASSWORD | The password used to push to the custom registry. |
 
 ## NPM release
-Workflow for releasing a NPM package on GitHub.
+Workflow for releasing a NPM package on npmjs.com.
 
 ```yaml
 jobs:
@@ -110,6 +110,11 @@ jobs:
 | node-version | The version of Node.js to use.          | &#x2610; | `18.x`, `20.x`, `22.x` | `20.x`        |
 | version      | Version of the NPM release.             | &#x2611; |                        |               |
 | lerna        | Whether the project is a lerna project. | &#x2610; | `true`, `false`        | `false`       |
+
+### Secrets
+| Secret name | Description                             | Required |
+|-------------|-----------------------------------------|----------|
+| NPM_TOKEN   | The token used to publish to npmjs.com. | &#x2611; |
 
 
 ## Versioning

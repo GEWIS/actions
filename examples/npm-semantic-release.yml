@@ -11,7 +11,7 @@ on:
 
 jobs:
   versioning:
-    uses: GEWIS/actions/.github/workflows/npm-release.yml@v1
+    uses: GEWIS/actions/.github/workflows/versioning.yml@v1
     with:
       dry-run: 'true',
 
