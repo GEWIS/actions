@@ -51,6 +51,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Artifact
         uses: actions/download-artifact@v4

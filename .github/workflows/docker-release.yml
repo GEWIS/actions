@@ -50,6 +50,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up environment
         if: ${{ inputs.env-file != '' }}
@@ -60,8 +62,11 @@ jobs:
 
       - name: Extract Image Name
         id: extract
+        env:
+          DOCKER_PATH: ${{ matrix.docker-path }}
         run: |
-          input="${{ matrix.docker-path }}"
+          # The value is now safely stored in DOCKER_PATH
+          input="$DOCKER_PATH"
           result="${input#*/}"
           echo "part=$result" >> "${GITHUB_OUTPUT}"
 
@@ -70,10 +75,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          install: true
-          use: true
-          driver-opts: network=none
 
       - name: Login to Registry (GitHub)
         if: ${{ inputs.github-registry == 'true' }}

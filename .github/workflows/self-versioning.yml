@@ -8,3 +8,7 @@ on:
 jobs:
   versioning:
     uses: ./.github/workflows/versioning.yml
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
