@@ -74,7 +74,11 @@ jobs:
         run: npm whoami
 
       - name: Lerna Publish
-        run: npx --yes lerna version ${{ inputs.version }} --amend --yes && npx lerna publish from-git --yes
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          npx --yes lerna version "$VERSION" --amend --yes
+          npx lerna publish from-git --yes
 
       - name: Push Tags
         run: git push --force-with-lease --follow-tags

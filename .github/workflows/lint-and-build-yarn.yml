@@ -60,8 +60,10 @@ jobs:
         if: ${{ inputs.artifact-name != '' }}
 
       - name: Prepare
-        run: ${{ inputs.prepare-command }}
+        env:
+          PREPARE_CMD: ${{ inputs.prepare-command }}
         if: ${{ inputs.prepare-command != '' }}
+        run: bash -c "$PREPARE_CMD"
 
       - name: Set Node.js
         uses: actions/setup-node@v4
@@ -103,5 +105,7 @@ jobs:
         if: ${{ inputs.build }}
 
       - name: Cleanup
-        run: ${{ inputs.cleanup-command }}
+        env:
+          CLEANUP_CMD: ${{ inputs.cleanup-command }}
+        run: bash -c "$CLEANUP_CMD"
         if: ${{ inputs.cleanup-command != '' && always() }}
