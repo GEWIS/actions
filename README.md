@@ -94,6 +94,9 @@ jobs:
 ## NPM release
 Workflow for releasing a NPM package on npmjs.com.
 
+> [!NOTE]  
+> Make sure to include `prepublishOnly: 'yarn install --frozen-lockfile && yarn build'` or a `prepublishOnly: npm ci && npm run build` in your `package.json` to ensure the package is built before publishing. Since the workflow won't build by itself.
+
 ```yaml
 jobs:
   build-and-lint:
