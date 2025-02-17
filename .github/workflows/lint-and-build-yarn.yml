@@ -73,34 +73,34 @@ jobs:
           node-version: ${{ inputs.node-version }}
 
       - name: Install dependencies
-        uses: borales/actions-yarn@v4
+        uses: borales/actions-yarn@v5
         with:
           cmd: install
           dir: ${{ inputs.working-directory }}
 
       - name: Lint the project
-        uses: borales/actions-yarn@v4
+        uses: borales/actions-yarn@v5
         with:
           cmd: lint
           dir: ${{ inputs.working-directory }}
         if: ${{ inputs.lint }}
 
       - name: Format the project
-        uses: borales/actions-yarn@v4
+        uses: borales/actions-yarn@v5
         with:
           cmd: format
           dir: ${{ inputs.working-directory }}
         if: ${{ inputs.format }}
 
       - name: Test the project
-        uses: borales/actions-yarn@v4
+        uses: borales/actions-yarn@v5
         with:
           cmd: test
           dir: ${{ inputs.working-directory }}
         if: ${{ inputs.test }}
 
       - name: Build the project
-        uses: borales/actions-yarn@v4
+        uses: borales/actions-yarn@v5
         with:
           cmd: build
           dir: ${{ inputs.working-directory }}
