@@ -40,9 +40,6 @@ jobs:
           node-version: ${{ inputs.node-version }}
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Fetch Release Config
-        run: if grep -q '"@gewis/release-config"' package.json; then npm install @gewis/release-config; fi
-
       - run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -71,9 +68,6 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
           registry-url: 'https://registry.npmjs.org'
-
-      - name: Fetch Release Config
-        run: if grep -q '"@gewis/release-config"' package.json; then npm install @gewis/release-config; fi
 
       - run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
         env:
