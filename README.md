@@ -28,18 +28,18 @@ jobs:
 
 ### Inputs
 
-| Input name        | Description                                                  | Required | Options                | Default value |
-|-------------------|--------------------------------------------------------------|----------|------------------------|---------------|
-| working-directory | The directory where the project is located.                  | &#x2610; |                        | `.`           |
-| node-version      | The version of Node.js to use.                               | &#x2610; | `18.x`, `20.x`, `22.x` | `20.x`        |
-| artifact-name     | The name of the artifact to use.                             | &#x2610; |                        |               |
-| artifact-path     | The path where the artifact should be stored.                | &#x2610; |                        |               |
-| prepare-command   | The command to run before building (and and after checkout). | &#x2610; |                        |               |
-| cleanup-command   | The command to run after building.                           | &#x2610; |                        |               |
-| lint              | Whether to lint the project.                                 | &#x2610; | `true`, `false`        | `true`        |
-| format            | Whether to format the project.                               | &#x2610; | `true`, `false`        | `false`       |
-| test              | Whether to run tests.                                        | &#x2610; | `true`, `false`        | `false`       |
-| build             | Whether to build the project.                                | &#x2610; | `true`, `false`        | `true`        |
+| Input name        | Description                                                  | Required | Options         | Default value |
+|-------------------|--------------------------------------------------------------|----------|-----------------|---------------|
+| working-directory | The directory where the project is located.                  | &#x2610; |                 | `.`           |
+| node-version      | The version of Node.js to use.                               | &#x2610; | `20.x`, `22.x`  | `20.x`        |
+| artifact-name     | The name of the artifact to use.                             | &#x2610; |                 |               |
+| artifact-path     | The path where the artifact should be stored.                | &#x2610; |                 |               |
+| prepare-command   | The command to run before building (and and after checkout). | &#x2610; |                 |               |
+| cleanup-command   | The command to run after building.                           | &#x2610; |                 |               |
+| lint              | Whether to lint the project.                                 | &#x2610; | `true`, `false` | `true`        |
+| format            | Whether to format the project.                               | &#x2610; | `true`, `false` | `false`       |
+| test              | Whether to run tests.                                        | &#x2610; | `true`, `false` | `false`       |
+| build             | Whether to build the project.                                | &#x2610; | `true`, `false` | `true`        |
 
 ## Docker build
 Workflow for building a docker image. Useful for, for example, testing if a container build succeeds on a develop branch.
@@ -105,11 +105,11 @@ jobs:
 
 ### Inputs
 
-| Input name   | Description                             | Required | Options                | Default value |
-|--------------|-----------------------------------------|----------|------------------------|---------------|
-| node-version | The version of Node.js to use.          | &#x2610; | `18.x`, `20.x`, `22.x` | `20.x`        |
-| version      | Version of the NPM release.             | &#x2611; |                        |               |
-| lerna        | Whether the project is a lerna project. | &#x2610; | `true`, `false`        | `false`       |
+| Input name   | Description                             | Required | Options         | Default value |
+|--------------|-----------------------------------------|----------|-----------------|---------------|
+| node-version | The version of Node.js to use.          | &#x2610; | `20.x`, `22.x`  | `20.x`        |
+| version      | Version of the NPM release.             | &#x2611; |                 |               |
+| lerna        | Whether the project is a lerna project. | &#x2610; | `true`, `false` | `false`       |
 
 ### Secrets
 | Secret name | Description                             | Required |
