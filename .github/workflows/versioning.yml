@@ -28,6 +28,15 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Fetch Release Config
+        run: if [ -f package.json ] && grep -q '"@gewis/release-config"' package.json; then npm install @gewis/release-config; fi
+
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@v4
         id: semantic
