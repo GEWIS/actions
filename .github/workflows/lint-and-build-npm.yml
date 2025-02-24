@@ -72,6 +72,9 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Install dependencies
         working-directory: ${{ inputs.working-directory }}
         run: npm install
