@@ -84,6 +84,15 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set Docker Tags
+        id: docker_tags
+        run: |
+          if [ "${{ matrix.project }}" = "." ]; then
+            echo "TAGS=ghcr.io/gewis/${{ matrix.docker-path }}:latest,ghcr.io/gewis/${{ matrix.docker-path }}:${{ inputs.version }}" >> "$GITHUB_ENV"
+          else
+            echo "TAGS=ghcr.io/gewis/${{ matrix.docker-path }}/${{ matrix.project }}:latest,ghcr.io/gewis/${{ matrix.docker-path }}/${{ matrix.project }}:${{ inputs.version }}" >> "$GITHUB_ENV"
+          fi
+
       - name: Build and Push Docker Image (GitHub)
         if: ${{ inputs.github-registry == 'true' }}
         uses: docker/build-push-action@v6
@@ -91,9 +100,7 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
-          tags: |
-            ghcr.io/gewis/${{ steps.extract.outputs.part }}:latest
-            ghcr.io/gewis/${{ steps.extract.outputs.part }}:${{inputs.version}}
+          tags: ${{ env.TAGS }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           file: ${{ matrix.project }}/Dockerfile
@@ -106,6 +113,15 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
+      - name: Set Custom Docker Tags
+        id: custom_docker_tags
+        run: |
+          if [ "${{ matrix.project }}" = "." ]; then
+            echo "TAGS=${{ inputs.docker-registry }}/${{ matrix.docker-path }}:latest,${{ inputs.docker-registry }}/${{ matrix.docker-path }}:${{ inputs.version }}" >> "$GITHUB_ENV"
+          else
+            echo "TAGS=${{ inputs.docker-registry }}/${{ matrix.docker-path }}/${{ matrix.project }}:latest,${{ inputs.docker-registry }}/${{ matrix.docker-path }}/${{ matrix.project }}:${{ inputs.version }}" >> "$GITHUB_ENV"
+          fi
+
       - name: Build and Push Docker Image (Custom)
         if: ${{ inputs.docker-registry != '' }}
         uses: docker/build-push-action@v6
@@ -113,9 +129,7 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
-          tags: |
-            ${{ inputs.docker-registry }}/${{ matrix.docker-path }}:latest
-            ${{ inputs.docker-registry }}/${{ matrix.docker-path }}:${{ inputs.version }}
+          tags: ${{ env.TAGS }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           file: ${{ matrix.project }}/Dockerfile
