@@ -87,6 +87,7 @@ jobs:
       - name: Build and Push Docker Image (GitHub)
         if: ${{ inputs.github-registry == 'true' }}
         uses: docker/build-push-action@v6
+        working-directory: ${{ matrix.project }}
         with:
           context: .
           platforms: linux/amd64
@@ -96,7 +97,7 @@ jobs:
             ghcr.io/gewis/${{ steps.extract.outputs.part }}:${{inputs.version}}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          file: ${{ matrix.project }}/Dockerfile
+          file: Dockerfile
 
       - name: Login to Registry (Custom)
         uses: docker/login-action@v3
