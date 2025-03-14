@@ -88,9 +88,9 @@ jobs:
         id: docker_tags
         run: |
           if [ "${{ matrix.project }}" = "." ]; then
-            echo "TAGS=ghcr.io/gewis/${{ matrix.docker-path }}:latest,ghcr.io/gewis/${{ matrix.docker-path }}:${{ inputs.version }}" >> "$GITHUB_ENV"
+            echo "TAGS=ghcr.io/gewis/${{ steps.extract.outputs.part }}:latest,ghcr.io/gewis/${{ steps.extract.outputs.part }}:${{ inputs.version }}" >> "$GITHUB_ENV"
           else
-            echo "TAGS=ghcr.io/gewis/${{ matrix.docker-path }}/${{ matrix.project }}:latest,ghcr.io/gewis/${{ matrix.docker-path }}/${{ matrix.project }}:${{ inputs.version }}" >> "$GITHUB_ENV"
+            echo "TAGS=ghcr.io/gewis/${{ steps.extract.outputs.part }}/${{ matrix.project }}:latest,ghcr.io/gewis/${{ steps.extract.outputs.part }}/${{ matrix.project }}:${{ inputs.version }}" >> "$GITHUB_ENV"
           fi
 
       - name: Build and Push Docker Image (GitHub)
