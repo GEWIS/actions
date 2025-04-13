@@ -28,6 +28,10 @@ on:
         required: true
         description: 'Comma-separated list of Docker paths corresponding to each project'
         type: string
+      build-args:
+        required: false
+        description: 'Build arguments in format key=value separated by newlines'
+        type: string
     secrets:
       REGISTRY_USERNAME:
         required: true
@@ -133,3 +137,4 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           file: ${{ matrix.project }}/Dockerfile
+          build-args: ${{ inputs.build-args }}
