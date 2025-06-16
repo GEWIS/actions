@@ -78,7 +78,7 @@ jobs:
 
       - name: Login to Registry (GitHub)
         if: ${{ inputs.github-registry == 'true' }}
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
