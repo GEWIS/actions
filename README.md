@@ -9,7 +9,7 @@ Common and Reusable GitHub Actions for the GEWIS organization.
 > All inputs for the workflows should be provided as strings. However, sometimes a certain structure is expected. These are noted in the "Options" columns.
 
 ## Lint and build
-Workflow for linting, formatting, testing and building projects. Can be used for both `npm` and `yarn`.
+Workflow for linting, formatting, testing and building projects. Implemented for both `npm/yarn` and `golang`.
 
 ```yaml
 jobs:
@@ -24,6 +24,12 @@ jobs:
     with:
       node-version: '20.x'
       test: true
+
+  build-and-lint-go:
+    uses: GEWIS/actions/.github/workflows/lint-and-build-go.yml@v1
+    with:
+      go-version: '1.24'
+      test: true
 ```
 
 ### Inputs
@@ -32,6 +38,7 @@ jobs:
 |-------------------|--------------------------------------------------------------|----------|-----------------|---------------|
 | working-directory | The directory where the project is located.                  | &#x2610; |                 | `.`           |
 | node-version      | The version of Node.js to use.                               | &#x2610; | `20.x`, `22.x`  | `20.x`        |
+| go-version        | The version of Golang to use.                                | &#x2610; | `>1.17`         | `1.24`        |
 | artifact-name     | The name of the artifact to use.                             | &#x2610; |                 |               |
 | artifact-path     | The path where the artifact should be stored.                | &#x2610; |                 |               |
 | prepare-command   | The command to run before building (and and after checkout). | &#x2610; |                 |               |
