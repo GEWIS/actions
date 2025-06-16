@@ -61,9 +61,18 @@ jobs:
 
 ### Inputs
 
-| Input name | Description                                  | Required | Options | Default value |
-|------------|----------------------------------------------|----------|---------|---------------|
-| projects   | Comma-separated list of projects to release. | &#x2611; |         |               |
+| Input name      | Description                                            | Required | Options | Default value |
+|-----------------|--------------------------------------------------------|----------|---------|---------------|
+| projects        | Comma-separated list of projects to release.           | &#x2611; |         |               |
+| docker-registry | Docker registry for base images behind authentication. | &#x2610; |         |               |
+
+### Secrets
+
+| Secret name        | Secret value                               | 
+|--------------------|--------------------------------------------|
+| REGISTRY\_USERNAME | The username used for the custom registry. |
+| REGISTRY\_PASSWORD | The password used for the custom registry. |
+
 
 ## Docker release
 Workflow for building Docker images and releasing them. Can be used to push to GitHub and any other registry.

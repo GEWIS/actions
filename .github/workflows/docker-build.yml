@@ -8,6 +8,15 @@ on:
         required: true
         description: 'Comma-separated list of projects to build'
         type: string
+      docker-registry:
+        required: false
+        description: 'Docker registry for base images behind authentication'
+        type: string
+    secrets:
+      REGISTRY_USERNAME:
+        required: false
+      REGISTRY_PASSWORD:
+        required: false
 
 jobs:
   dockerize:
@@ -30,7 +39,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2
 
-      - name: Build and push Docker image
+      - name: Login to Registry (Custom)
+        if: ${{ inputs.docker-registry != '' }}
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772
+        with:
+          registry: ${{ inputs.docker-registry }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build Docker image
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83
         with:
           context: .
