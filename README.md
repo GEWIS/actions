@@ -38,7 +38,7 @@ jobs:
 |-------------------|--------------------------------------------------------------|----------|-----------------|---------------|
 | working-directory | The directory where the project is located.                  | &#x2610; |                 | `.`           |
 | node-version      | The version of Node.js to use.                               | &#x2610; | `20.x`, `22.x`  | `20.x`        |
-| go-version        | The version of Golang to use.                                | &#x2610; | `>1.17`         | `1.24`        |
+| go-version        | The version of Golang to use.                                | &#x2610; | `^1.17.0`       | `^1.24.0`     |
 | artifact-name     | The name of the artifact to use.                             | &#x2610; |                 |               |
 | artifact-path     | The path where the artifact should be stored.                | &#x2610; |                 |               |
 | prepare-command   | The command to run before building (and and after checkout). | &#x2610; |                 |               |
