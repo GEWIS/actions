@@ -61,7 +61,7 @@ jobs:
         env:
           PREPARE_CMD: ${{ inputs.prepare-command }}
         if: ${{ inputs.prepare-command != '' }}
-        run: bash -c "$PREPARE_CMD"
+        run: sh -c "$PREPARE_CMD"
 
       - name: Set up environment
         if: ${{ inputs.env-file != '' }}
