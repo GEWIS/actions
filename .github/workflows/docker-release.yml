@@ -28,6 +28,10 @@ on:
         required: true
         description: 'Comma-separated list of Docker paths corresponding to each project'
         type: string
+      prepare-command:
+        required: false
+        type: string
+        description: 'Command to run directly after checkout.'
     secrets:
       REGISTRY_USERNAME:
         required: true
@@ -52,6 +56,12 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
+
+      - name: Prepare
+        env:
+          PREPARE_CMD: ${{ inputs.prepare-command }}
+        if: ${{ inputs.prepare-command != '' }}
+        run: bash -c "$PREPARE_CMD"
 
       - name: Set up environment
         if: ${{ inputs.env-file != '' }}
