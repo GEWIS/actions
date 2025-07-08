@@ -12,6 +12,10 @@ on:
         required: false
         description: 'Docker registry for base images behind authentication'
         type: string
+      prepare-command:
+        required: false
+        type: string
+        description: 'Command to run directly after checkout.'
     secrets:
       REGISTRY_USERNAME:
         required: false
@@ -32,6 +36,12 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
+
+      - name: Prepare
+        env:
+          PREPARE_CMD: ${{ inputs.prepare-command }}
+        if: ${{ inputs.prepare-command != '' }}
+        run: bash -c "$PREPARE_CMD"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392
