@@ -61,11 +61,11 @@ jobs:
 
 ### Inputs
 
-| Input name      | Description                                            | Required | Options | Default value |
-|-----------------|--------------------------------------------------------|----------|---------|---------------|
-| projects        | Comma-separated list of projects to release.           | &#x2611; |         |               |
-| docker-registry | Docker registry for base images behind authentication. | &#x2610; |         |               |
-| prepare-command | Command to run directly after checkout.                | &#x2610; |         |               |
+| Input name      | Description                                            | Required | Options   | Default value |
+|-----------------|--------------------------------------------------------|----------|-----------|---------------|
+| projects        | Comma-separated list of projects to release.           | &#x2611; |           |               |
+| docker-registry | Docker registry for base images behind authentication. | &#x2610; |           |               |
+| skip-checkout   | Skip checkout of the repository.                       | &#x2610; | `boolean` | `false`       |
 
 ### Secrets
 
@@ -100,7 +100,7 @@ jobs:
 | github-registry | Whether to push the image to the GitHub registry.        | &#x2610; | `true`, `false` | `false`       |
 | env-file        | Contents of the environment file to use during building. | &#x2610; |                 |               |
 | docker-paths    | The docker namespace, project and image name to push to. | &#x2611; |                 |               |
-| prepare-command | Command to run directly after checkout.                  | &#x2610; |                 |               |
+| skip-checkout   | Skip checkout of the repository.                         | &#x2610; | `boolean`       | `false`       |
 
 ### Secrets
 
