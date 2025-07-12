@@ -17,6 +17,11 @@ on:
         required: false
         description: 'Whether project is a lerna project'
         type: string
+      working-directory:
+        required: false
+        type: string
+        description: 'Subdirectory to run npm publish from'
+        default: '.'
     secrets:
       NPM_TOKEN:
         required: true
@@ -42,11 +47,12 @@ jobs:
           node-version: ${{ inputs.node-version }}
           registry-url: 'https://registry.npmjs.org'
 
-      - run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+      - run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ${{ inputs.working-directory }}/.npmrc
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish
+        working-directory: ${{ inputs.working-directory }}
         run: npm version from-git --no-commit-hooks --no-git-tag-version && npm publish --provenance --access public
 
   publish-npm-lerna:
