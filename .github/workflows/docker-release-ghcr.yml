@@ -1,3 +1,4 @@
+# reusable workflow
 name: Docker Release to GHCR
 
 on:
@@ -40,7 +41,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Write .env when provided
+      - name: Set up environment
         if: ${{ inputs.env-file != '' }}
         env:
           ENV_FILE: ${{ inputs.env-file }}
@@ -54,7 +55,7 @@ jobs:
         run: |
           input="$DOCKER_PATH"
           result="${input#*/}"
-          echo "part=$result" >> "$GITHUB_OUTPUT"
+          echo "part=$result" >> "${GITHUB_OUTPUT}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392
