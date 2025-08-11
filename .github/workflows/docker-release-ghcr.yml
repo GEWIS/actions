@@ -1,0 +1,89 @@
+name: Docker Release to GHCR
+
+on:
+  workflow_call:
+    inputs:
+      projects:
+        required: true
+        description: 'JSON array of project contexts to build, e.g. ["app","api"] or ["."].'
+        type: string
+      version:
+        required: true
+        description: 'Version tag for the Docker release'
+        type: string
+      env-file:
+        required: false
+        description: 'Contents of the .env file to place in each project directory during build'
+        type: string
+      docker-paths:
+        required: true
+        description: 'JSON array of Docker paths matching projects, e.g. ["gewis/app","gewis/api"]'
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: ${{ inputs.version != '' }}
+    permissions:
+      packages: write
+      contents: read
+    container:
+      image: docker:dind
+    strategy:
+      matrix:
+        project: ${{ fromJson(inputs.projects) }}
+        docker-path: ${{ fromJson(inputs.docker-paths) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Write .env when provided
+        if: ${{ inputs.env-file != '' }}
+        env:
+          ENV_FILE: ${{ inputs.env-file }}
+        run: |
+          echo "${ENV_FILE}" > ${{ matrix.project }}/.env
+
+      - name: Extract image name suffix
+        id: extract
+        env:
+          DOCKER_PATH: ${{ matrix.docker-path }}
+        run: |
+          input="$DOCKER_PATH"
+          result="${input#*/}"
+          echo "part=$result" >> "$GITHUB_OUTPUT"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
+
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set GHCR tags
+        id: tags
+        run: |
+          if [ "${{ matrix.project }}" = "." ]; then
+            echo "TAGS=ghcr.io/gewis/${{ steps.extract.outputs.part }}:latest,ghcr.io/gewis/${{ steps.extract.outputs.part }}:${{ inputs.version }}" >> "$GITHUB_ENV"
+          else
+            echo "TAGS=ghcr.io/gewis/${{ steps.extract.outputs.part }}/${{ matrix.project }}:latest,ghcr.io/gewis/${{ steps.extract.outputs.part }}/${{ matrix.project }}:${{ inputs.version }}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build and push to GHCR
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83
+        with:
+          context: ${{ matrix.project }}
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.TAGS }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
