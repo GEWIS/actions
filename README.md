@@ -76,6 +76,7 @@ jobs:
 
 ## Docker release
 Workflow for building Docker images and releasing them. Can be used to push to GitHub and any other registry.
+The `docker-release-ghcr.yml` workflow is identical to this one, but *only* pushes to GitHub Container Registry and does not require secrets.
 
 ```yaml
 jobs:
