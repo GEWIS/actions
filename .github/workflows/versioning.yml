@@ -38,7 +38,7 @@ jobs:
         run: if [ -f package.json ] && grep -q '"@gewis/release-config"' package.json; then npm install @gewis/release-config; fi
 
       - name: Semantic Release
-        uses: cycjimmy/semantic-release-action@9cc899c47e6841430bbaedb43de1560a568dfd16
+        uses: cycjimmy/semantic-release-action@ba330626c4750c19d8299de843f05c7aa5574f62
         id: semantic
         with:
           dry_run: ${{ inputs.dry-run }}
