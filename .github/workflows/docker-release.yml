@@ -28,6 +28,10 @@ on:
         required: true
         description: 'Comma-separated list of Docker paths corresponding to each project'
         type: string
+      build-contexts:
+        required: false
+        description: 'Comma-separated extra build contexts to pass to the docker build command'
+        type: string
     secrets:
       REGISTRY_USERNAME:
         required: true
@@ -103,6 +107,7 @@ jobs:
           tags: ${{ env.TAGS }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-contexts: ${{ inputs.build-contexts }}
 
       - name: Login to Registry (Custom)
         if: ${{ inputs.docker-registry != '' }}
@@ -131,3 +136,4 @@ jobs:
           tags: ${{ env.TAGS }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-contexts: ${{ inputs.build-contexts }}
