@@ -26,7 +26,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
-          persist-credentials: false
+          persist-credentials: true
 
       - name: Setup Node
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
@@ -44,3 +44,27 @@ jobs:
           dry_run: ${{ inputs.dry-run }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update version tags
+        if: steps.semantic.outputs.new_release_published == 'true' && inputs.dry-run != 'true'
+        run: |
+          VERSION="${{ steps.semantic.outputs.new_release_version }}"
+          if [ -z "$VERSION" ]; then
+            echo "No version found, skipping tag update"
+            exit 0
+          fi
+          
+          # Extract major and minor version components
+          MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          MINOR=$(echo "$VERSION" | cut -d. -f1-2)
+          
+          # Configure git
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git config user.name 'github-actions[bot]'
+          
+          # Create or update major and minor version tags
+          git tag -f "v$MAJOR" HEAD
+          git tag -f "v$MINOR" HEAD
+          
+          # Push tags with force-with-lease for safety
+          git push --force-with-lease origin "v$MAJOR" "v$MINOR"
