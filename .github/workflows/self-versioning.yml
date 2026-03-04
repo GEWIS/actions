@@ -3,7 +3,7 @@ name: Versioning of the actions repository
 on:
   push:
     branches:
-      - develop
+      - main
 
 jobs:
   versioning:
@@ -12,3 +12,4 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
+
