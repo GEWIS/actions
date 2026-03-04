@@ -66,5 +66,5 @@ jobs:
           git tag -f "v$MAJOR" HEAD
           git tag -f "v$MINOR" HEAD
           
-          # Push tags with force-with-lease for safety
-          git push --force-with-lease origin "v$MAJOR" "v$MINOR"
+          # Push tags with force to update floating version tags
+          git push --force origin "v$MAJOR" "v$MINOR"
