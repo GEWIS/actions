@@ -43,8 +43,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BASE_BRANCH: ${{ inputs.base-branch }}
           HEAD_BRANCH: ${{ inputs.head-branch }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           PR=$(gh pr list \
+            --repo "${REPOSITORY}" \
             --base "${BASE_BRANCH}" \
             --head "${HEAD_BRANCH}" \
             --state open \
@@ -67,8 +69,10 @@ jobs:
           TITLE: ${{ inputs.title }}
           BODY: ${{ inputs.body }}
           DRAFT: ${{ inputs.draft }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           ARGS=(
+            --repo "${REPOSITORY}"
             --base "${BASE_BRANCH}"
             --head "${HEAD_BRANCH}"
             --title "${TITLE}"
