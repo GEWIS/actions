@@ -1,7 +1,7 @@
 # This example is self-validating inside the GEWIS/actions repository.
 # Downstream repositories should replace the local reusable-workflow paths
 # with GEWIS/actions/.github/workflows/...@v1.
-name: Semantic release
+name: Docker Matrix Release
 
 on:
   push:
@@ -15,6 +15,8 @@ jobs:
       pull-requests: write
       issues: write
     uses: ./.github/workflows/versioning.yml
+    with:
+      node-version: "22.x"
 
   release:
     permissions:
@@ -24,11 +26,15 @@ jobs:
     needs: versioning
     if: ${{ needs.versioning.outputs.next-version != '' }}
     with:
-      projects: '["."]'
+      projects: '["apps/dashboard","apps/point-of-sale"]'
+      docker-paths: '["gewis/sudosos-dashboard","gewis/sudosos-pos"]'
+      dockerfiles: '["apps/dashboard/Dockerfile","apps/point-of-sale/Dockerfile"]'
       docker-registry: "abc.docker-registry.gewis.nl"
-      docker-paths: '["eou/plankapi"]'
       version: ${{ needs.versioning.outputs.next-version }}
-      github-registry: "true"
+      env-file: ${{ vars.ENV_FILE_PRODUCTION }}
+      build-args: |
+        GIT_COMMIT_BRANCH=${{ github.head_ref || github.ref_name }}
+        GIT_COMMIT_SHA=${{ github.sha }}
     secrets:
       REGISTRY_USERNAME: ${{ secrets.SVC_GH_ABCEOU_USERNAME }}
       REGISTRY_PASSWORD: ${{ secrets.SVC_GH_ABCEOU_PWD }}

@@ -1,3 +1,6 @@
+# This example is self-validating inside the GEWIS/actions repository.
+# Downstream repositories should replace the local reusable-workflow path
+# with GEWIS/actions/.github/workflows/lint-and-build-yarn.yml@v1.
 name: Lint and build
 
 on:
@@ -8,9 +11,12 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   build-and-lint:
-    uses: GEWIS/actions/.github/workflows/lint-and-build-yarn.yml@v1
+    uses: ./.github/workflows/lint-and-build-yarn.yml
     with:
       node-version: "22.x"
       lint: true

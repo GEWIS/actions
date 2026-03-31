@@ -1,0 +1,82 @@
+# reusable workflow
+name: Prepare Release PR
+
+on:
+  workflow_call:
+    inputs:
+      base-branch:
+        required: false
+        description: 'Base branch for the release PR'
+        type: string
+        default: 'main'
+      head-branch:
+        required: false
+        description: 'Head branch for the release PR'
+        type: string
+        default: 'develop'
+      title:
+        required: false
+        description: 'Title for the release PR'
+        type: string
+        default: 'Release: update `main` from `develop`'
+      body:
+        required: false
+        description: 'Body for the release PR'
+        type: string
+        default: 'This PR is automatically created to prepare a release from develop to main.'
+      draft:
+        required: false
+        description: 'Whether the release PR should be created as a draft'
+        type: string
+        default: 'true'
+
+jobs:
+  create-release-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Check for existing PR
+        id: check-pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_BRANCH: ${{ inputs.base-branch }}
+          HEAD_BRANCH: ${{ inputs.head-branch }}
+        run: |
+          PR=$(gh pr list \
+            --base "${BASE_BRANCH}" \
+            --head "${HEAD_BRANCH}" \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty' || echo "")
+
+          if [ -z "${PR}" ]; then
+            echo "exists=false" >> "${GITHUB_OUTPUT}"
+          else
+            echo "exists=true" >> "${GITHUB_OUTPUT}"
+            echo "number=${PR}" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Create release PR
+        if: steps.check-pr.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_BRANCH: ${{ inputs.base-branch }}
+          HEAD_BRANCH: ${{ inputs.head-branch }}
+          TITLE: ${{ inputs.title }}
+          BODY: ${{ inputs.body }}
+          DRAFT: ${{ inputs.draft }}
+        run: |
+          ARGS=(
+            --base "${BASE_BRANCH}"
+            --head "${HEAD_BRANCH}"
+            --title "${TITLE}"
+            --body "${BODY}"
+          )
+
+          if [ "${DRAFT}" = "true" ]; then
+            ARGS+=(--draft)
+          fi
+
+          gh pr create "${ARGS[@]}"

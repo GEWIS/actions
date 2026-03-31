@@ -1,5 +1,5 @@
 # reusable workflow
-name: Docker Release
+name: Docker Branch Release
 
 on:
   workflow_call:
@@ -8,9 +8,9 @@ on:
         required: true
         description: 'JSON array of project contexts to release'
         type: string
-      version:
+      docker-paths:
         required: true
-        description: 'Version of the Docker release'
+        description: 'JSON array of Docker image paths corresponding to each project'
         type: string
       docker-registry:
         required: false
@@ -22,7 +22,7 @@ on:
         type: string
       env-file:
         required: false
-        description: 'Contents of the ENV file to use during building, should only be used as an exception.'
+        description: 'Contents of the .env file to place in each project directory during build'
         type: string
       dockerfile:
         required: false
@@ -31,10 +31,6 @@ on:
       dockerfiles:
         required: false
         description: 'JSON array of Dockerfile paths matching projects'
-        type: string
-      docker-paths:
-        required: true
-        description: 'JSON array of Docker image paths corresponding to each project'
         type: string
       build-contexts:
         required: false
@@ -54,6 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.prepare.outputs.matrix }}
+      branch-tag: ${{ steps.prepare.outputs.branch-tag }}
     steps:
       - name: Prepare release matrix
         id: prepare
@@ -62,7 +59,14 @@ jobs:
           DOCKER_PATHS: ${{ inputs.docker-paths }}
           DOCKERFILE: ${{ inputs.dockerfile }}
           DOCKERFILES: ${{ inputs.dockerfiles }}
+          REF_NAME: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
         run: |
+          if [ "${REF_TYPE}" != "branch" ]; then
+            echo "This workflow only supports branch refs" >&2
+            exit 1
+          fi
+
           MATRIX_JSON=$(node <<'NODE'
           const projects = JSON.parse(process.env.PROJECTS);
           const dockerPaths = JSON.parse(process.env.DOCKER_PATHS);
@@ -91,20 +95,32 @@ jobs:
           process.stdout.write(JSON.stringify({ include }));
           NODE
           )
+
+          BRANCH_TAG=$(printf '%s' "${REF_NAME}" | tr '[:upper:]' '[:lower:]' | sed -E 's#[^a-z0-9._-]+#-#g; s#^-+##; s#-+$##')
+
+          if [ -z "${BRANCH_TAG}" ]; then
+            echo "Sanitized branch name produced an empty Docker tag" >&2
+            exit 1
+          fi
+
+          if [ "${#BRANCH_TAG}" -gt 128 ]; then
+            echo "Sanitized branch tag exceeds Docker's 128-character limit" >&2
+            exit 1
+          fi
+
           echo "matrix=${MATRIX_JSON}" >> "${GITHUB_OUTPUT}"
+          echo "branch-tag=${BRANCH_TAG}" >> "${GITHUB_OUTPUT}"
 
   release:
     needs: prepare-matrix
     runs-on: ubuntu-latest
-    if: ${{ inputs.version != '' }}
     permissions:
-      contents: read
       packages: write
+      contents: read
     container:
       image: docker:dind
     strategy:
       matrix: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -139,7 +155,7 @@ jobs:
           PROJECT_DIR: ${{ matrix.project }}
           DOCKERFILE_INPUT: ${{ matrix.dockerfile }}
           DOCKER_PATH_INPUT: ${{ matrix.docker_path }}
-          VERSION_INPUT: ${{ inputs.version }}
+          BRANCH_TAG_INPUT: ${{ needs.prepare-matrix.outputs['branch-tag'] }}
           REGISTRY_INPUT: ${{ inputs.docker-registry }}
         run: |
           validate_path() {
@@ -156,9 +172,17 @@ jobs:
             fi
           }
 
+          validate_tag() {
+            if ! printf '%s' "$1" | grep -Eq '^[a-z0-9._-]+$'; then
+              echo "Invalid tag: $1" >&2
+              exit 1
+            fi
+          }
+
           validate_path "${PROJECT_DIR}"
           validate_path "${DOCKERFILE_INPUT}"
           validate_image_path "${DOCKER_PATH_INPUT}"
+          validate_tag "${BRANCH_TAG_INPUT}"
 
           if [ -n "${DOCKERFILE_INPUT}" ]; then
             DOCKERFILE_PATH="${DOCKERFILE_INPUT}"
@@ -171,11 +195,11 @@ jobs:
           {
             echo "context=${PROJECT_DIR}"
             echo "dockerfile=${DOCKERFILE_PATH}"
-            echo "ghcr_tags=ghcr.io/${DOCKER_PATH_INPUT}:latest,ghcr.io/${DOCKER_PATH_INPUT}:${VERSION_INPUT}"
+            echo "ghcr_tags=ghcr.io/${DOCKER_PATH_INPUT}:${BRANCH_TAG_INPUT}"
           } >> "${GITHUB_OUTPUT}"
 
           if [ -n "${REGISTRY_INPUT}" ]; then
-            echo "custom_tags=${REGISTRY_INPUT}/${DOCKER_PATH_INPUT}:latest,${REGISTRY_INPUT}/${DOCKER_PATH_INPUT}:${VERSION_INPUT}" >> "${GITHUB_OUTPUT}"
+            echo "custom_tags=${REGISTRY_INPUT}/${DOCKER_PATH_INPUT}:${BRANCH_TAG_INPUT}" >> "${GITHUB_OUTPUT}"
           fi
 
       - name: Build and Push Docker Image (GitHub)

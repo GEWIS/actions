@@ -1,0 +1,22 @@
+# This example is self-validating inside the GEWIS/actions repository.
+# Downstream repositories should replace the local reusable-workflow path
+# with GEWIS/actions/.github/workflows/prepare-release-pr.yml@v1.
+name: Prepare Release PR
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  prepare-release-pr:
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: ./.github/workflows/prepare-release-pr.yml
+    with:
+      base-branch: "main"
+      head-branch: "develop"
+      title: "Release: update `main` from `develop`"
+      body: "This PR is automatically created to prepare a release from develop to main."
+      draft: "true"

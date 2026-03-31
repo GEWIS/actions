@@ -47,9 +47,10 @@ jobs:
           node-version: ${{ inputs.node-version }}
           registry-url: 'https://registry.npmjs.org'
 
-      - run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ${{ inputs.working-directory }}/.npmrc
-        env:
+      - env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          WORKDIR: ${{ inputs.working-directory }}
+        run: printf '%s\n' "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > "${WORKDIR}/.npmrc"
 
       - name: Publish
         working-directory: ${{ inputs.working-directory }}
@@ -78,9 +79,9 @@ jobs:
           node-version: ${{ inputs.node-version }}
           registry-url: 'https://registry.npmjs.org'
 
-      - run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
-        env:
+      - env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: printf '%s\n' "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
 
       - run: echo "provenance=true" >> .npmrc
 

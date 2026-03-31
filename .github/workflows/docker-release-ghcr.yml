@@ -16,13 +16,73 @@ on:
         required: false
         description: 'Contents of the .env file to place in each project directory during build'
         type: string
+      dockerfile:
+        required: false
+        description: 'Single Dockerfile path to use for every project'
+        type: string
+      dockerfiles:
+        required: false
+        description: 'JSON array of Dockerfile paths matching projects'
+        type: string
       docker-paths:
         required: true
         description: 'JSON array of Docker paths matching projects, e.g. ["gewis/app","gewis/api"]'
         type: string
+      build-contexts:
+        required: false
+        description: 'Newline-separated extra build contexts to pass to the docker build command'
+        type: string
+      build-args:
+        required: false
+        description: 'Newline-separated build args to pass to the docker build command'
+        type: string
 
 jobs:
+  prepare-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.prepare.outputs.matrix }}
+    steps:
+      - name: Prepare release matrix
+        id: prepare
+        env:
+          PROJECTS: ${{ inputs.projects }}
+          DOCKER_PATHS: ${{ inputs.docker-paths }}
+          DOCKERFILE: ${{ inputs.dockerfile }}
+          DOCKERFILES: ${{ inputs.dockerfiles }}
+        run: |
+          MATRIX_JSON=$(node <<'NODE'
+          const projects = JSON.parse(process.env.PROJECTS);
+          const dockerPaths = JSON.parse(process.env.DOCKER_PATHS);
+          const singleDockerfile = (process.env.DOCKERFILE || '').trim();
+          const dockerfilesInput = (process.env.DOCKERFILES || '').trim();
+          const dockerfiles = dockerfilesInput ? JSON.parse(dockerfilesInput) : [];
+
+          if (!Array.isArray(projects) || projects.length === 0) {
+            throw new Error('projects must be a non-empty JSON array');
+          }
+
+          if (!Array.isArray(dockerPaths) || dockerPaths.length !== projects.length) {
+            throw new Error('docker-paths must match the number of projects');
+          }
+
+          if (dockerfiles.length > 0 && dockerfiles.length !== projects.length) {
+            throw new Error('dockerfiles must match the number of projects');
+          }
+
+          const include = projects.map((project, index) => ({
+            project,
+            docker_path: dockerPaths[index],
+            dockerfile: dockerfiles[index] || singleDockerfile || '',
+          }));
+
+          process.stdout.write(JSON.stringify({ include }));
+          NODE
+          )
+          echo "matrix=${MATRIX_JSON}" >> "${GITHUB_OUTPUT}"
+
   release:
+    needs: prepare-matrix
     runs-on: ubuntu-latest
     if: ${{ inputs.version != '' }}
     permissions:
@@ -31,9 +91,7 @@ jobs:
     container:
       image: docker:dind
     strategy:
-      matrix:
-        project: ${{ fromJson(inputs.projects) }}
-        docker-path: ${{ fromJson(inputs.docker-paths) }}
+      matrix: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
 
     steps:
       - name: Checkout repository
@@ -45,17 +103,9 @@ jobs:
         if: ${{ inputs.env-file != '' }}
         env:
           ENV_FILE: ${{ inputs.env-file }}
+          PROJECT_DIR: ${{ matrix.project }}
         run: |
-          echo "${ENV_FILE}" > ${{ matrix.project }}/.env
-
-      - name: Extract image name suffix
-        id: extract
-        env:
-          DOCKER_PATH: ${{ matrix.docker-path }}
-        run: |
-          input="$DOCKER_PATH"
-          result="${input#*/}"
-          echo "part=$result" >> "${GITHUB_OUTPUT}"
+          printf '%s' "${ENV_FILE}" > "${PROJECT_DIR}/.env"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a
@@ -70,21 +120,55 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set GHCR tags
-        id: tags
+      - name: Resolve build inputs
+        id: resolve
+        env:
+          PROJECT_DIR: ${{ matrix.project }}
+          DOCKERFILE_INPUT: ${{ matrix.dockerfile }}
+          DOCKER_PATH_INPUT: ${{ matrix.docker_path }}
+          VERSION_INPUT: ${{ inputs.version }}
         run: |
-          if [ "${{ matrix.project }}" = "." ]; then
-            echo "TAGS=ghcr.io/gewis/${{ steps.extract.outputs.part }}:latest,ghcr.io/gewis/${{ steps.extract.outputs.part }}:${{ inputs.version }}" >> "$GITHUB_ENV"
+          validate_path() {
+            case "$1" in
+              "" ) return 0 ;;
+              /* | *".."* | *"//"* ) echo "Invalid path: $1" >&2; exit 1 ;;
+            esac
+          }
+
+          validate_image_path() {
+            if ! printf '%s' "$1" | grep -Eq '^[a-z0-9]+([._/-][a-z0-9]+)*$'; then
+              echo "Invalid image path: $1" >&2
+              exit 1
+            fi
+          }
+
+          validate_path "${PROJECT_DIR}"
+          validate_path "${DOCKERFILE_INPUT}"
+          validate_image_path "${DOCKER_PATH_INPUT}"
+
+          if [ -n "${DOCKERFILE_INPUT}" ]; then
+            DOCKERFILE_PATH="${DOCKERFILE_INPUT}"
+          elif [ "${PROJECT_DIR}" = "." ]; then
+            DOCKERFILE_PATH="./Dockerfile"
           else
-            echo "TAGS=ghcr.io/gewis/${{ steps.extract.outputs.part }}/${{ matrix.project }}:latest,ghcr.io/gewis/${{ steps.extract.outputs.part }}/${{ matrix.project }}:${{ inputs.version }}" >> "$GITHUB_ENV"
+            DOCKERFILE_PATH="${PROJECT_DIR}/Dockerfile"
           fi
+
+          {
+            echo "context=${PROJECT_DIR}"
+            echo "dockerfile=${DOCKERFILE_PATH}"
+            echo "ghcr_tags=ghcr.io/${DOCKER_PATH_INPUT}:latest,ghcr.io/${DOCKER_PATH_INPUT}:${VERSION_INPUT}"
+          } >> "${GITHUB_OUTPUT}"
 
       - name: Build and push to GHCR
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
-        with:
-          context: ${{ matrix.project }}
+        with: # zizmor: ignore[template-injection] sanitized in the resolve step above
+          context: ${{ steps.resolve.outputs.context }}
+          file: ${{ steps.resolve.outputs.dockerfile }}
           platforms: linux/amd64
           push: true
-          tags: ${{ env.TAGS }}
+          tags: ${{ steps.resolve.outputs.ghcr_tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: ${{ inputs.build-args }}
+          build-contexts: ${{ inputs.build-contexts }}
