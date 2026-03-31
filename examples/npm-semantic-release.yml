@@ -1,3 +1,6 @@
+# This example is self-validating inside the GEWIS/actions repository.
+# Downstream repositories should replace the local reusable-workflow paths
+# with GEWIS/actions/.github/workflows/...@v1.
 name: Publish
 
 on:
@@ -11,15 +14,25 @@ on:
 
 jobs:
   versioning:
-    uses: GEWIS/actions/.github/workflows/versioning.yml@v1
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    uses: ./.github/workflows/versioning.yml
     with:
       dry-run: 'true'
 
   publish-npm:
-    uses: GEWIS/actions/.github/workflows/npm-release.yml@v1
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    uses: ./.github/workflows/npm-release.yml
     needs: versioning
     if: ${{ needs.versioning.outputs.next-version != '' }}
     with:
       node-version: '22.x'
       version: ${{ needs.versioning.outputs.next-version }}
       lerna: 'true'
+    secrets:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
