@@ -143,7 +143,7 @@ jobs:
 
       - name: Login to Registry (GitHub)
         if: ${{ inputs.github-registry == 'true' }}
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -218,7 +218,7 @@ jobs:
 
       - name: Login to Registry (Custom) # zizmor: ignore[secrets-outside-env] caller-owned registry secrets cannot be bound to a shared environment here
         if: ${{ inputs.docker-registry != '' }}
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121
         with:
           registry: ${{ inputs.docker-registry }}
           username: ${{ secrets.REGISTRY_USERNAME }}
