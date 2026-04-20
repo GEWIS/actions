@@ -180,7 +180,7 @@ jobs:
 
       - name: Build and Push Docker Image (GitHub)
         if: ${{ inputs.github-registry == 'true' }}
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
         with: # zizmor: ignore[template-injection] sanitized in the resolve step above
           context: ${{ steps.resolve.outputs.context }}
           file: ${{ steps.resolve.outputs.dockerfile }}
@@ -202,7 +202,7 @@ jobs:
 
       - name: Build and Push Docker Image (Custom)
         if: ${{ inputs.docker-registry != '' }}
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
         with: # zizmor: ignore[template-injection] sanitized in the resolve step above
           context: ${{ steps.resolve.outputs.context }}
           file: ${{ steps.resolve.outputs.dockerfile }}
