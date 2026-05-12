@@ -168,10 +168,11 @@ jobs:
             DOCKERFILE_PATH="${PROJECT_DIR}/Dockerfile"
           fi
 
+          IMAGE_NAME="${DOCKER_PATH_INPUT##*/}"
           {
             echo "context=${PROJECT_DIR}"
             echo "dockerfile=${DOCKERFILE_PATH}"
-            echo "ghcr_tags=ghcr.io/${DOCKER_PATH_INPUT}:latest,ghcr.io/${DOCKER_PATH_INPUT}:${VERSION_INPUT}"
+            echo "ghcr_tags=ghcr.io/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:latest,ghcr.io/${GITHUB_REPOSITORY_OWNER}/${IMAGE_NAME}:${VERSION_INPUT}"
           } >> "${GITHUB_OUTPUT}"
 
           if [ -n "${REGISTRY_INPUT}" ]; then
