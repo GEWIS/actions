@@ -26,7 +26,11 @@ on:
         type: string
       docker-paths:
         required: true
-        description: 'JSON array of Docker paths matching projects, e.g. ["gewis/app","gewis/api"]'
+        description: |
+          JSON array of Docker image paths matching projects, e.g. ["eou/plankapi"].
+          First segment should be the team name (eou, nc, pos, ...) and is dropped
+          on push; the lowercased repo owner is prefixed:
+          "eou/plankapi" -> ghcr.io/<owner>/plankapi.
         type: string
       build-contexts:
         required: false
@@ -154,10 +158,12 @@ jobs:
             DOCKERFILE_PATH="${PROJECT_DIR}/Dockerfile"
           fi
 
+          IMAGE_PATH="${DOCKER_PATH_INPUT#*/}"
+          OWNER=$(printf '%s' "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')
           {
             echo "context=${PROJECT_DIR}"
             echo "dockerfile=${DOCKERFILE_PATH}"
-            echo "ghcr_tags=ghcr.io/${DOCKER_PATH_INPUT}:latest,ghcr.io/${DOCKER_PATH_INPUT}:${VERSION_INPUT}"
+            echo "ghcr_tags=ghcr.io/${OWNER}/${IMAGE_PATH}:latest,ghcr.io/${OWNER}/${IMAGE_PATH}:${VERSION_INPUT}"
           } >> "${GITHUB_OUTPUT}"
 
       - name: Build and push to GHCR
