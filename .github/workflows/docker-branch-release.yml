@@ -10,7 +10,13 @@ on:
         type: string
       docker-paths:
         required: true
-        description: 'JSON array of Docker image paths corresponding to each project'
+        description: |
+          JSON array of Docker image paths matching projects, e.g. ["eou/plankapi"].
+          First segment should be the team name (eou, nc, pos, ...).
+          GHCR drops the team segment and prefixes the lowercased repo owner:
+          "eou/plankapi" -> ghcr.io/<owner>/plankapi.
+          Custom registry keeps the full path:
+          "eou/plankapi" -> <registry>/eou/plankapi.
         type: string
       docker-registry:
         required: false
@@ -192,10 +198,12 @@ jobs:
             DOCKERFILE_PATH="${PROJECT_DIR}/Dockerfile"
           fi
 
+          IMAGE_PATH="${DOCKER_PATH_INPUT#*/}"
+          OWNER=$(printf '%s' "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')
           {
             echo "context=${PROJECT_DIR}"
             echo "dockerfile=${DOCKERFILE_PATH}"
-            echo "ghcr_tags=ghcr.io/${DOCKER_PATH_INPUT}:${BRANCH_TAG_INPUT}"
+            echo "ghcr_tags=ghcr.io/${OWNER}/${IMAGE_PATH}:${BRANCH_TAG_INPUT}"
           } >> "${GITHUB_OUTPUT}"
 
           if [ -n "${REGISTRY_INPUT}" ]; then

@@ -81,6 +81,9 @@ jobs:
 | REGISTRY_USERNAME | The username used for the custom registry. |
 | REGISTRY_PASSWORD | The password used for the custom registry. |
 
+> [!NOTE]
+> The Docker release workflows below take `docker-paths` like `team/name` (e.g. `nc/aurora/core`). For GHCR pushes the team segment is dropped and the lowercased repo owner is prefixed (`nc/aurora/core` -> `ghcr.io/<owner>/aurora/core`). Custom registries receive the path as-is.
+
 ## Docker release
 
 Workflow for building Docker images and releasing them. Can be used to push to GitHub and any other registry.
@@ -103,7 +106,7 @@ jobs:
 | --------------- | ---------------------------------------------------------------------- | -------- | --------------- | ------------- |
 | projects        | JSON array of project contexts to release.                             | &#x2611; |                 |               |
 | version         | Version of the Docker release.                                         | &#x2611; |                 |               |
-| docker-paths    | JSON array of Docker image paths corresponding to each project.        | &#x2611; |                 |               |
+| docker-paths    | JSON array of image paths per project. See note above.                 | &#x2611; |                 |               |
 | docker-registry | The docker registry to push the build image to.                        | &#x2610; |                 |               |
 | github-registry | Whether to push the image to the GitHub registry.                      | &#x2610; | `true`, `false` | `false`       |
 | env-file        | Contents of the environment file to use during building.               | &#x2610; |                 |               |
@@ -129,7 +132,7 @@ jobs:
     uses: GEWIS/actions/.github/workflows/docker-release-ghcr.yml@v1
     with:
       projects: '["."]'
-      docker-paths: '["gewis/aurora/core"]'
+      docker-paths: '["nc/aurora/core"]'
       version: "4.0.40"
 ```
 
@@ -139,7 +142,7 @@ jobs:
 | ------------ | ---------------------------------------------------------------- | -------- | ------- | ------------- |
 | projects     | JSON array of project contexts to build, e.g. `["."]`.           | &#x2611; |         |               |
 | version      | Version tag for the Docker release.                              | &#x2611; |         |               |
-| docker-paths | JSON array of Docker paths matching projects.                    | &#x2611; |         |               |
+| docker-paths | JSON array of image paths per project. See note above.           | &#x2611; |         |               |
 | env-file     | Contents of the .env file to place in each project during build. | &#x2610; |         |               |
 | dockerfile   | Single Dockerfile path to use for every project.                 | &#x2610; |         |               |
 | dockerfiles  | JSON array of Dockerfile paths matching projects.                | &#x2610; |         |               |
@@ -156,7 +159,7 @@ jobs:
     uses: GEWIS/actions/.github/workflows/docker-branch-release.yml@v1
     with:
       projects: '["apps/dashboard","apps/point-of-sale"]'
-      docker-paths: '["gewis/sudosos-dashboard","gewis/sudosos-pos"]'
+      docker-paths: '["abc/sudosos-dashboard","abc/sudosos-pos"]'
       dockerfiles: '["apps/dashboard/Dockerfile","apps/point-of-sale/Dockerfile"]'
       docker-registry: "registry.example.org"
       env-file: ${{ vars.ENV_FILE_DEVELOPMENT }}
@@ -170,7 +173,7 @@ jobs:
 | Input name      | Description                                                         | Required | Options         | Default value |
 | --------------- | ------------------------------------------------------------------- | -------- | --------------- | ------------- |
 | projects        | JSON array of project contexts to release.                          | &#x2611; |                 |               |
-| docker-paths    | JSON array of Docker image paths corresponding to each project.     | &#x2611; |                 |               |
+| docker-paths    | JSON array of image paths per project. See note above.              | &#x2611; |                 |               |
 | docker-registry | The docker registry to push the build image to.                     | &#x2610; |                 |               |
 | github-registry | Whether to push the image to the GitHub registry.                   | &#x2610; | `true`, `false` | `false`       |
 | env-file        | Contents of the environment file to use during building.            | &#x2610; |                 |               |
