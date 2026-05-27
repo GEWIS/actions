@@ -61,6 +61,8 @@ jobs:
     outputs:
       matrix: ${{ steps.prepare.outputs.matrix }}
     steps:
+      - uses: jfrog/boost@96489172747f2a338464b1e747a0496717b535d8
+
       - name: Prepare release matrix
         id: prepare
         env:
@@ -112,6 +114,8 @@ jobs:
       matrix: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
 
     steps:
+      - uses: jfrog/boost@96489172747f2a338464b1e747a0496717b535d8
+
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
