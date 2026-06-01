@@ -167,7 +167,7 @@ jobs:
           } >> "${GITHUB_OUTPUT}"
 
       - name: Build and push to GHCR
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf
         with: # zizmor: ignore[template-injection] sanitized in the resolve step above
           context: ${{ steps.resolve.outputs.context }}
           file: ${{ steps.resolve.outputs.dockerfile }}
