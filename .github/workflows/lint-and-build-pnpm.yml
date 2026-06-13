@@ -1,0 +1,109 @@
+# reusable workflow
+name: TypeScript Lint and Build with pnpm
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        required: false
+        type: string
+        default: '.'
+      node-version:
+        required: false
+        type: string
+        default: '20.x'
+      artifact-name:
+        required: false
+        type: string
+        description: 'Name of artifact to use'
+      artifact-path:
+        required: false
+        type: string
+        description: 'Path to place artifact'
+      prepare-command:
+        required: false
+        type: string
+        description: 'Command to run directly after checkout.'
+      cleanup-command:
+        required: false
+        type: string
+        description: 'Command to run after the workflow (even if failed).'
+      lint:
+        type: boolean
+        description: 'Run the lint step.'
+        default: true
+      format:
+        type: boolean
+        description: 'Run the format step.'
+        default: false
+      test:
+        type: boolean
+        description: 'Run the test step.'
+        default: false
+      build:
+        type: boolean
+        description: 'Run the build step.'
+        default: true
+
+jobs:
+  pnpm-steps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - name: Artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: ${{ inputs.artifact-path }}
+        if: ${{ inputs.artifact-name != '' }}
+
+      - name: Prepare
+        env:
+          PREPARE_CMD: ${{ inputs.prepare-command }}
+        if: ${{ inputs.prepare-command != '' }}
+        run: bash -c "$PREPARE_CMD"
+
+      - name: Set Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093
+
+      - name: Install dependencies
+        working-directory: ${{ inputs.working-directory }}
+        run: pnpm install
+
+      - name: Lint the project
+        working-directory: ${{ inputs.working-directory }}
+        run: pnpm run lint
+        if: ${{ inputs.lint }}
+
+      - name: Format the project
+        working-directory: ${{ inputs.working-directory }}
+        run: pnpm run format
+        if: ${{ inputs.format }}
+
+      - name: Test the project
+        working-directory: ${{ inputs.working-directory }}
+        run: pnpm run test
+        if: ${{ inputs.test }}
+
+      - name: Build the project
+        working-directory: ${{ inputs.working-directory }}
+        run: pnpm run build
+        if: ${{ inputs.build }}
+
+      - name: Cleanup
+        env:
+          CLEANUP_CMD: ${{ inputs.cleanup-command }}
+        run: bash -c "$CLEANUP_CMD"
+        if: ${{ inputs.cleanup-command != '' && always() }}
