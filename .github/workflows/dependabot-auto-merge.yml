@@ -1,0 +1,80 @@
+# reusable workflow
+name: Dependabot Auto Approve and Merge
+
+on:
+  workflow_call:
+    inputs:
+      auto-approve:
+        type: boolean
+        required: false
+        default: true
+        description: 'Automatically approve the pull request'
+      auto-merge:
+        type: boolean
+        required: false
+        default: true
+        description: 'Enable GitHub auto-merge on the pull request'
+      actor:
+        type: string
+        required: false
+        default: 'dependabot[bot]'
+        description: 'GitHub login of the bot allowed to trigger this workflow'
+      update-types:
+        type: string
+        required: false
+        default: ''
+        description: 'Optional comma-separated list of allowed update types. Possible values: version-update:semver-patch, version-update:semver-minor, version-update:semver-major. Empty allows any type.'
+      merge-method:
+        type: string
+        required: false
+        default: 'merge'
+        description: 'Merge method to enable for auto-merge. One of `merge`, `squash`, or `rebase`.'
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    if: ${{ (inputs.auto-approve || inputs.auto-merge) && github.event.pull_request.user.login == inputs.actor }}
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Fetch dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify update type allowlist
+        id: allowlist
+        continue-on-error: true
+        env:
+          UPDATE_TYPES: ${{ inputs.update-types }}
+          ACTUAL_UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
+        run: |
+          if [ -z "${UPDATE_TYPES}" ]; then
+            exit 0
+          fi
+          # shellcheck disable=SC2206
+          ALLOWED_TYPES=( ${UPDATE_TYPES//,/ } )
+          for type in "${ALLOWED_TYPES[@]}"; do
+            if [ "${type}" = "${ACTUAL_UPDATE_TYPE}" ]; then
+              exit 0
+            fi
+          done
+          echo "Blocked: update type '${ACTUAL_UPDATE_TYPE}' is not in allowlist '${UPDATE_TYPES}'"
+          exit 1
+
+      - name: Approve pull request
+        if: ${{ inputs.auto-approve && steps.allowlist.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr review --approve "${PR_URL}"
+
+      - name: Enable auto-merge
+        if: ${{ inputs.auto-merge && steps.allowlist.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          MERGE_METHOD: ${{ inputs.merge-method }}
+        run: gh pr merge --auto "--${MERGE_METHOD}" "${PR_URL}"

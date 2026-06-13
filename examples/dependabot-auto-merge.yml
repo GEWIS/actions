@@ -1,0 +1,26 @@
+# This example is self-validating inside the GEWIS/actions repository.
+# Downstream repositories should replace the local reusable-workflow path
+# with GEWIS/actions/.github/workflows/dependabot-auto-merge.yml@v1.
+name: Dependabot Auto Approve and Merge
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  dependabot:
+    uses: ./.github/workflows/dependabot-auto-merge.yml
+    permissions:
+      contents: write
+      pull-requests: write
+    with:
+      # Approve and enable auto-merge for any dependabot PR.
+      auto-approve: true
+      auto-merge: true
+      # squash is a sensible default for dependabot PRs; change as needed.
+      merge-method: 'squash'
