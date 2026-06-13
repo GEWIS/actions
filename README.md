@@ -271,6 +271,43 @@ jobs:
 | body        | Body for the release PR.                 | &#x2610; |                 | See workflow  |
 | draft       | Whether the release PR should be a draft | &#x2610; | `true`, `false` | `true`        |
 
+## Dependabot auto approve and merge
+
+Reusable workflow for automatically approving Dependabot pull requests and enabling GitHub auto-merge.
+Both behaviours are independent and can be toggled separately. The workflow uses
+[`dependabot/fetch-metadata`](https://github.com/dependabot/fetch-metadata) to gate on the
+update type and dependency name when configured.
+
+```yaml
+jobs:
+  dependabot:
+    uses: GEWIS/actions/.github/workflows/dependabot-auto-merge.yml@v1
+    permissions:
+      contents: write
+      pull-requests: write
+    with:
+      auto-approve: true
+      auto-merge: true
+      merge-method: "squash"
+      # Optional: only auto-merge patch and minor updates
+      update-types: "version-update:semver-patch,version-update:semver-minor"
+```
+
+### Inputs
+
+| Input name        | Description                                                                                          | Required | Options                                            | Default value      |
+| ----------------- | ---------------------------------------------------------------------------------------------------- | -------- | -------------------------------------------------- | ------------------ |
+| auto-approve      | Automatically approve the pull request.                                                              | &#x2612; | `true`, `false`                                    | `true`             |
+| auto-merge        | Enable GitHub auto-merge on the pull request.                                                         | &#x2612; | `true`, `false`                                    | `true`             |
+| actor             | GitHub login of the bot allowed to trigger this workflow.                                            | &#x2610; |                                                    | `dependabot[bot]`  |
+| update-types      | Optional comma-separated list of allowed update types. Empty allows any type.                        | &#x2610; | `version-update:semver-patch`, `version-update:semver-minor`, `version-update:semver-major` |                    |
+| merge-method      | Merge method to enable for auto-merge.                                                               | &#x2610; | `merge`, `squash`, `rebase`                        | `merge`            |
+
+> [!NOTE]
+> Branch protection must allow auto-merge for the target branch, and any required status checks
+> must pass before the PR is merged. See
+> [Automatically merging a pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/automatically-merging-a-pull-request).
+
 ## Examples
 
 Example workflows for building, versioning and releasing a project can be found in the [examples](./examples) directory.
