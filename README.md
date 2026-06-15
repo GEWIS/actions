@@ -11,7 +11,7 @@ Common and Reusable GitHub Actions for the GEWIS organization.
 
 ## Lint and build
 
-Workflow for linting, formatting, testing and building projects. Implemented for both `npm/yarn` and `golang`.
+Workflow for linting, formatting, testing and building projects. Implemented for `npm/yarn/pnpm` and `golang`.
 
 ```yaml
 jobs:
@@ -27,6 +27,12 @@ jobs:
       node-version: "20.x"
       test: true
 
+  build-and-lint-pnpm:
+    uses: GEWIS/actions/.github/workflows/lint-and-build-pnpm.yml@v1
+    with:
+      node-version: "20.x"
+      format: true
+
   build-and-lint-go:
     uses: GEWIS/actions/.github/workflows/lint-and-build-go.yml@v1
     with:
@@ -36,19 +42,19 @@ jobs:
 
 ### Inputs
 
-| Input name        | Description                                              | Required | Options         | Default (npm/yarn) | Default (go) |
-| ----------------- | -------------------------------------------------------- | -------- | --------------- | ------------------ | ------------ |
-| working-directory | The directory where the project is located.              | &#x2610; |                 | `.`                | `.`          |
-| node-version      | The version of Node.js to use.                           | &#x2610; | Any valid version string | `20.x`   | —            |
-| go-version        | The version of Golang to use.                            | &#x2610; | `^1.17.0`       | —                  | `^1.24.0`    |
-| artifact-name     | The name of the artifact to use.                         | &#x2610; |                 |                    |              |
-| artifact-path     | The path where the artifact should be stored.            | &#x2610; |                 |                    |              |
-| prepare-command   | The command to run before building (and after checkout). | &#x2610; |                 |                    |              |
-| cleanup-command   | The command to run after building.                       | &#x2610; |                 |                    |              |
-| lint              | Whether to lint the project.                             | &#x2610; | `true`, `false` | `true`             | `true`       |
-| format            | Whether to format the project.                           | &#x2610; | `true`, `false` | `false`            | `true`       |
-| test              | Whether to run tests.                                    | &#x2610; | `true`, `false` | `false`            | `true`       |
-| build             | Whether to build the project.                            | &#x2610; | `true`, `false` | `true`             | `true`       |
+| Input name        | Description                                              | Required | Options                  | Default (npm/yarn/pnpm) | Default (go) |
+| ----------------- | -------------------------------------------------------- | -------- | ------------------------ | ----------------------- | ------------ |
+| working-directory | The directory where the project is located.              | &#x2610; |                          | `.`                     | `.`          |
+| node-version      | The version of Node.js to use.                           | &#x2610; | Any valid version string | `20.x`                  | n/a          |
+| go-version        | The version of Golang to use.                            | &#x2610; | `^1.17.0`                | n/a                     | `^1.24.0`    |
+| artifact-name     | The name of the artifact to use.                         | &#x2610; |                          |                         |              |
+| artifact-path     | The path where the artifact should be stored.            | &#x2610; |                          |                         |              |
+| prepare-command   | The command to run before building (and after checkout). | &#x2610; |                          |                         |              |
+| cleanup-command   | The command to run after building.                       | &#x2610; |                          |                         |              |
+| lint              | Whether to lint the project.                             | &#x2610; | `true`, `false`          | `true`                  | `true`       |
+| format            | Whether to format the project.                           | &#x2610; | `true`, `false`          | `false`                 | `true`       |
+| test              | Whether to run tests.                                    | &#x2610; | `true`, `false`          | `false`                 | `true`       |
+| build             | Whether to build the project.                            | &#x2610; | `true`, `false`          | `true`                  | `true`       |
 
 ## Docker build
 
