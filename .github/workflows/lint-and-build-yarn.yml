@@ -71,6 +71,8 @@ jobs:
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version: ${{ inputs.node-version }}
+          cache: 'yarn'
+          cache-dependency-path: ${{ inputs.working-directory }}/yarn.lock
 
       - name: Enable Corepack
         run: corepack enable
@@ -78,7 +80,7 @@ jobs:
       - name: Install dependencies
         uses: borales/actions-yarn@3766bb1335b98fb13c60eaf358fe20811b730a88
         with:
-          cmd: install
+          cmd: install --immutable
           dir: ${{ inputs.working-directory }}
 
       - name: Lint the project
