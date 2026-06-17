@@ -71,13 +71,15 @@ jobs:
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version: ${{ inputs.node-version }}
+          cache: 'npm'
+          cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
 
       - name: Enable Corepack
         run: corepack enable
 
       - name: Install dependencies
         working-directory: ${{ inputs.working-directory }}
-        run: npm install
+        run: npm ci
 
       - name: Lint the project
         working-directory: ${{ inputs.working-directory }}
