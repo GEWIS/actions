@@ -67,6 +67,9 @@ jobs:
         if: ${{ inputs.prepare-command != '' }}
         run: bash -c "$PREPARE_CMD"
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Set Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
@@ -74,41 +77,28 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: ${{ inputs.working-directory }}/yarn.lock
 
-      - name: Enable Corepack
-        run: corepack enable
-
       - name: Install dependencies
-        uses: borales/actions-yarn@3766bb1335b98fb13c60eaf358fe20811b730a88
-        with:
-          cmd: install --immutable
-          dir: ${{ inputs.working-directory }}
+        run: yarn install --immutable
+        working-directory: ${{ inputs.working-directory }}
 
       - name: Lint the project
-        uses: borales/actions-yarn@3766bb1335b98fb13c60eaf358fe20811b730a88
-        with:
-          cmd: lint
-          dir: ${{ inputs.working-directory }}
+        run: yarn lint
+        working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.lint }}
 
       - name: Format the project
-        uses: borales/actions-yarn@3766bb1335b98fb13c60eaf358fe20811b730a88
-        with:
-          cmd: format
-          dir: ${{ inputs.working-directory }}
+        run: yarn format
+        working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.format }}
 
       - name: Test the project
-        uses: borales/actions-yarn@3766bb1335b98fb13c60eaf358fe20811b730a88
-        with:
-          cmd: test
-          dir: ${{ inputs.working-directory }}
+        run: yarn test
+        working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.test }}
 
       - name: Build the project
-        uses: borales/actions-yarn@3766bb1335b98fb13c60eaf358fe20811b730a88
-        with:
-          cmd: build
-          dir: ${{ inputs.working-directory }}
+        run: yarn build
+        working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.build }}
 
       - name: Cleanup
