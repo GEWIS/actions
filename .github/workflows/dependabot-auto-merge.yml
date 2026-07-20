@@ -35,6 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ (inputs.auto-approve || inputs.auto-merge) && github.event.pull_request.user.login == inputs.actor }}
     permissions:
+      actions: write
       contents: write
       pull-requests: write
     steps:
