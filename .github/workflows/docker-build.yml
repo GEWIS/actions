@@ -97,7 +97,7 @@ jobs:
 
       - name: Login to Registry (Custom) # zizmor: ignore[secrets-outside-env] caller-owned registry secrets cannot be bound to a shared environment here
         if: ${{ inputs.docker-registry != '' }}
-        uses: docker/login-action@371161bbe7024a29a25c5e19bfcbc0804fe9ad2c
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
           registry: ${{ inputs.docker-registry }}
           username: ${{ secrets.REGISTRY_USERNAME }}
