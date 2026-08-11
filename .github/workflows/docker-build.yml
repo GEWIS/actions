@@ -145,7 +145,7 @@ jobs:
           file: ${{ steps.resolve.outputs.dockerfile }}
           platforms: linux/amd64
           push: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.project }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.project }}
           build-args: ${{ inputs.build-args }}
           build-contexts: ${{ inputs.build-contexts }}
