@@ -219,8 +219,8 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ steps.resolve.outputs.ghcr_tags }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.project }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.project }}
           build-args: ${{ inputs.build-args }}
           build-contexts: ${{ inputs.build-contexts }}
 
@@ -241,7 +241,7 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ steps.resolve.outputs.custom_tags }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.project }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.project }}
           build-args: ${{ inputs.build-args }}
           build-contexts: ${{ inputs.build-contexts }}
