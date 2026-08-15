@@ -40,6 +40,10 @@ on:
         type: boolean
         description: 'Run the test step.'
         default: false
+      coverage:
+        type: boolean
+        description: 'Run the test step with coverage and post a report comment on the pull request. Requires "test" to also be true, and requires the caller to grant this job pull-requests: write.'
+        default: false
       build:
         type: boolean
         description: 'Run the build step.'
@@ -48,6 +52,9 @@ on:
 jobs:
   yarn-steps:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -94,7 +101,22 @@ jobs:
       - name: Test the project
         run: yarn test
         working-directory: ${{ inputs.working-directory }}
-        if: ${{ inputs.test }}
+        if: ${{ inputs.test && !inputs.coverage }}
+
+      - name: Test the project with coverage
+        run: yarn test --coverage
+        working-directory: ${{ inputs.working-directory }}
+        if: ${{ inputs.test && inputs.coverage }}
+
+      # Requires @vitest/coverage-v8 (or another coverage provider) installed
+      # in the caller's project, and `coverage.reporter` in its Vitest config
+      # to include 'json-summary' -- this action reads
+      # coverage/coverage-summary.json, which only that reporter produces.
+      - name: Report coverage on the pull request
+        uses: davelosert/vitest-coverage-report-action@8b157684c6a6b259b97d45e72b44242865c0f6a5 # v2.12.2
+        if: ${{ inputs.test && inputs.coverage && github.event_name == 'pull_request' }}
+        with:
+          working-directory: ${{ inputs.working-directory }}
 
       - name: Build the project
         run: yarn build
