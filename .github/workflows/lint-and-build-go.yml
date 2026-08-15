@@ -1,1 +1,129 @@
-# reusable workflowname: Golang Lint and Buildon:  workflow_call:    inputs:      working-directory:        required: false        type: string        default: '.'      go-version:        required: false        type: string        default: '^1.24.0'      artifact-name:        required: false        type: string        description: 'Name of artifact to use'      artifact-path:        required: false        type: string        description: 'Path to place artifact'      prepare-command:        required: false        type: string        description: 'Command to run directly after checkout.'      cleanup-command:        required: false        type: string        description: 'Command to run after the workflow (even if failed).'      format:        type: boolean        description: 'Run go fmt'        default: true      lint:        type: boolean        description: 'Run go vet'        default: true      test:        type: boolean        description: 'Run go test'        default: true      build:        type: boolean        description: 'Build the binary'        default: truejobs:  go-steps:    runs-on: ubuntu-latest    steps:      - name: Checkout        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1        with:          persist-credentials: false      - name: Artifact        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c        with:          name: ${{ inputs.artifact-name }}          path: ${{ inputs.artifact-path }}        if: ${{ inputs.artifact-name != '' }}      - name: Prepare        env:          PREPARE_CMD: ${{ inputs.prepare-command }}        if: ${{ inputs.prepare-command != '' }}        run: bash -c "$PREPARE_CMD"      - name: Setup Go        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e        with:          go-version: ${{ inputs.go-version }}      - name: go fmt        working-directory: ${{ inputs.working-directory }}        run: go fmt ./...        if: ${{ inputs.format }}      - name: go vet        working-directory: ${{ inputs.working-directory }}        run: go vet ./...        if: ${{ inputs.lint }}      - name: go test        working-directory: ${{ inputs.working-directory }}        run: go test ./...        if: ${{ inputs.test }}      - name: go build        working-directory: ${{ inputs.working-directory }}        run: go build ./...        if: ${{ inputs.build }}      - name: Cleanup        env:          CLEANUP_CMD: ${{ inputs.cleanup-command }}        run: bash -c "$CLEANUP_CMD"        if: ${{ inputs.cleanup-command != '' && always() }}
+# reusable workflow
+name: Golang Lint and Build
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        required: false
+        type: string
+        default: '.'
+      go-version:
+        required: false
+        type: string
+        default: '^1.24.0'
+      artifact-name:
+        required: false
+        type: string
+        description: 'Name of artifact to use'
+      artifact-path:
+        required: false
+        type: string
+        description: 'Path to place artifact'
+      prepare-command:
+        required: false
+        type: string
+        description: 'Command to run directly after checkout.'
+      cleanup-command:
+        required: false
+        type: string
+        description: 'Command to run after the workflow (even if failed).'
+      format:
+        type: boolean
+        description: 'Run go fmt'
+        default: true
+      lint:
+        type: boolean
+        description: 'Run go vet'
+        default: true
+      test:
+        type: boolean
+        description: 'Run go test'
+        default: true
+      coverage:
+        type: boolean
+        description: 'Run go test with coverage and post a report comment on the pull request. Requires "test" to also be true, and requires the caller to grant this job pull-requests: write.'
+        default: false
+      build:
+        type: boolean
+        description: 'Build the binary'
+        default: true
+
+jobs:
+  go-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: ${{ inputs.artifact-path }}
+        if: ${{ inputs.artifact-name != '' }}
+
+      - name: Prepare
+        env:
+          PREPARE_CMD: ${{ inputs.prepare-command }}
+        if: ${{ inputs.prepare-command != '' }}
+        run: bash -c "$PREPARE_CMD"
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with:
+          go-version: ${{ inputs.go-version }}
+
+      - name: go fmt
+        working-directory: ${{ inputs.working-directory }}
+        run: go fmt ./...
+        if: ${{ inputs.format }}
+
+      - name: go vet
+        working-directory: ${{ inputs.working-directory }}
+        run: go vet ./...
+        if: ${{ inputs.lint }}
+
+      - name: go test
+        working-directory: ${{ inputs.working-directory }}
+        run: go test ./...
+        if: ${{ inputs.test && !inputs.coverage }}
+
+      - name: go test with coverage
+        working-directory: ${{ inputs.working-directory }}
+        run: go test -coverprofile=coverage.out -covermode=atomic ./...
+        if: ${{ inputs.test && inputs.coverage }}
+
+      - name: Build coverage report
+        working-directory: ${{ inputs.working-directory }}
+        if: ${{ inputs.test && inputs.coverage && github.event_name == 'pull_request' }}
+        run: |
+          {
+            echo '## Go test coverage'
+            echo '```'
+            go tool cover -func=coverage.out
+            echo '```'
+          } > coverage-report.md
+
+      - name: Report coverage on the pull request
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+        if: ${{ inputs.test && inputs.coverage && github.event_name == 'pull_request' }}
+        with:
+          header: go-test-coverage
+          path: ${{ inputs.working-directory }}/coverage-report.md
+
+      - name: go build
+        working-directory: ${{ inputs.working-directory }}
+        run: go build ./...
+        if: ${{ inputs.build }}
+
+      - name: Cleanup
+        env:
+          CLEANUP_CMD: ${{ inputs.cleanup-command }}
+        run: bash -c "$CLEANUP_CMD"
+        if: ${{ inputs.cleanup-command != '' && always() }}
