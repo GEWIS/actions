@@ -1,0 +1,199 @@
+# reusable workflow
+name: Deployment Update
+
+on:
+  workflow_call:
+    inputs:
+      overlay:
+        required: true
+        description: 'Kustomize directory in the deployment repository to update, e.g. "parelpracht/overlays/test"'
+        type: string
+      images:
+        required: true
+        description: 'JSON array of image names without tag or digest, e.g. ["abc.docker-registry.gewis.nl/crm/parelpracht/server"]'
+        type: string
+      tag:
+        required: true
+        description: 'Image tag to deploy, e.g. "develop" or "1.6.0"'
+        type: string
+      pin-digest:
+        required: false
+        description: 'Whether to resolve the tag to its current digest and pin that instead of the tag'
+        type: string
+        default: 'false'
+      pull-request:
+        required: false
+        description: 'Whether to open a pull request instead of pushing to the deployment branch'
+        type: string
+        default: 'false'
+      deployment-repository:
+        required: false
+        description: 'Repository containing the deployment manifests'
+        type: string
+        default: 'GEWIS/abc-deployments'
+      deployment-branch:
+        required: false
+        description: 'Branch of the deployment repository to update'
+        type: string
+        default: 'main'
+    secrets:
+      APP_CLIENT_ID:
+        required: true
+      APP_PRIVATE_KEY:
+        required: true
+      REGISTRY_USERNAME:
+        required: false
+      REGISTRY_PASSWORD:
+        required: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Validate inputs
+        id: validate
+        env:
+          OVERLAY: ${{ inputs.overlay }}
+          IMAGES: ${{ inputs.images }}
+          TAG: ${{ inputs.tag }}
+          DEPLOYMENT_REPOSITORY: ${{ inputs.deployment-repository }}
+          DEPLOYMENT_BRANCH: ${{ inputs.deployment-branch }}
+        run: |
+          case "${OVERLAY}" in
+            "" | /* | *".."* | *"//"* ) echo "Invalid overlay: ${OVERLAY}" >&2; exit 1 ;;
+          esac
+
+          if ! printf '%s' "${TAG}" | grep -Eq '^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$'; then
+            echo "Invalid tag: ${TAG}" >&2
+            exit 1
+          fi
+
+          if ! printf '%s' "${DEPLOYMENT_REPOSITORY}" | grep -Eq '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$'; then
+            echo "Invalid deployment repository: ${DEPLOYMENT_REPOSITORY}" >&2
+            exit 1
+          fi
+
+          if ! git check-ref-format --branch "${DEPLOYMENT_BRANCH}" > /dev/null; then
+            echo "Invalid deployment branch: ${DEPLOYMENT_BRANCH}" >&2
+            exit 1
+          fi
+
+          if ! jq -e 'type == "array" and length > 0 and all(type == "string" and test("^[a-z0-9.-]+(:[0-9]+)?(/[a-z0-9]+([._-][a-z0-9]+)*)*$"))' <<< "${IMAGES}" > /dev/null; then
+            echo "images must be a non-empty JSON array of image names without tag or digest" >&2
+            exit 1
+          fi
+
+          {
+            echo "owner=${DEPLOYMENT_REPOSITORY%%/*}"
+            echo "name=${DEPLOYMENT_REPOSITORY#*/}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Create deployment repository token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ steps.validate.outputs.owner }}
+          repositories: ${{ steps.validate.outputs.name }}
+          permission-contents: write
+          permission-pull-requests: ${{ inputs.pull-request == 'true' && 'write' || '' }}
+
+      - name: Checkout deployment repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: ${{ inputs.deployment-repository }}
+          ref: ${{ inputs.deployment-branch }}
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install kustomize
+        run: |
+          curl -sSfLo kustomize.tar.gz "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.5.0/kustomize_v5.5.0_linux_amd64.tar.gz"
+          echo "6703a3a70a0c47cf0b37694030b54f1175a9dfeb17b3818b623ed58b9dbc2a77  kustomize.tar.gz" | sha256sum -c -
+          tar -xzf kustomize.tar.gz kustomize
+          sudo install -m 0755 kustomize /usr/local/bin/kustomize
+          rm kustomize kustomize.tar.gz
+
+      - name: Login to registry # zizmor: ignore[secrets-outside-env] caller-owned registry secrets cannot be bound to a shared environment here
+        if: ${{ inputs.pin-digest == 'true' }}
+        env:
+          IMAGES: ${{ inputs.images }}
+          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          if [ -z "${REGISTRY_USERNAME}" ]; then
+            exit 0
+          fi
+          jq -r '.[] | split("/")[0]' <<< "${IMAGES}" | sort -u | while read -r registry; do
+            echo "${REGISTRY_PASSWORD}" | docker login "${registry}" -u "${REGISTRY_USERNAME}" --password-stdin
+          done
+
+      - name: Update images
+        env:
+          OVERLAY: ${{ inputs.overlay }}
+          IMAGES: ${{ inputs.images }}
+          TAG: ${{ inputs.tag }}
+          PIN_DIGEST: ${{ inputs.pin-digest }}
+        run: |
+          jq -r '.[]' <<< "${IMAGES}" | while read -r image; do
+            if [ "${PIN_DIGEST}" = "true" ]; then
+              digest="$(docker buildx imagetools inspect "${image}:${TAG}" --format '{{.Manifest.Digest}}')"
+              (cd "${OVERLAY}" && kustomize edit set image "${image}@${digest}")
+            else
+              (cd "${OVERLAY}" && kustomize edit set image "${image}:${TAG}")
+            fi
+          done
+          git diff --stat
+
+      - name: Publish update
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          OVERLAY: ${{ inputs.overlay }}
+          TAG: ${{ inputs.tag }}
+          PULL_REQUEST: ${{ inputs.pull-request }}
+          DEPLOYMENT_REPOSITORY: ${{ inputs.deployment-repository }}
+          DEPLOYMENT_BRANCH: ${{ inputs.deployment-branch }}
+          SOURCE_REPOSITORY: ${{ github.repository }}
+        run: |
+          UPDATE_BRANCH="deployment-update/$(printf '%s' "${OVERLAY}" | tr '/' '-')"
+          OPEN_PR=""
+          if [ "${PULL_REQUEST}" = "true" ]; then
+            OPEN_PR="$(gh pr list --repo "${DEPLOYMENT_REPOSITORY}" --base "${DEPLOYMENT_BRANCH}" --head "${UPDATE_BRANCH}" --state open --json number --jq '.[0].number // empty')"
+          fi
+
+          if git diff --quiet -- "${OVERLAY}/kustomization.yaml"; then
+            echo "${DEPLOYMENT_BRANCH} already deploys ${TAG} to ${OVERLAY}"
+            if [ -n "${OPEN_PR}" ]; then
+              gh pr close "${OPEN_PR}" --repo "${DEPLOYMENT_REPOSITORY}" --delete-branch --comment "Superseded: ${DEPLOYMENT_BRANCH} already deploys ${TAG}."
+            fi
+            exit 0
+          fi
+
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "$(gh api "/users/${APP_SLUG}%5Bbot%5D" --jq .id)+${APP_SLUG}[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${DEPLOYMENT_REPOSITORY}.git"
+
+          MESSAGE="chore(${OVERLAY%%/*}): deploy ${TAG} to ${OVERLAY}"
+          BODY="Triggered by ${SOURCE_REPOSITORY}@${GITHUB_SHA}."
+          git add "${OVERLAY}/kustomization.yaml"
+          git commit -m "${MESSAGE}" -m "${BODY}"
+
+          if [ "${PULL_REQUEST}" = "true" ]; then
+            git push --force origin "HEAD:refs/heads/${UPDATE_BRANCH}"
+            if [ -n "${OPEN_PR}" ]; then
+              gh pr edit "${OPEN_PR}" --repo "${DEPLOYMENT_REPOSITORY}" --title "${MESSAGE}" --body "${BODY}"
+            else
+              gh pr create --repo "${DEPLOYMENT_REPOSITORY}" --base "${DEPLOYMENT_BRANCH}" --head "${UPDATE_BRANCH}" --title "${MESSAGE}" --body "${BODY}"
+            fi
+            exit 0
+          fi
+
+          for attempt in 1 2 3; do
+            git pull --rebase origin "${DEPLOYMENT_BRANCH}" && git push origin "HEAD:${DEPLOYMENT_BRANCH}" && exit 0
+            sleep $((attempt * 5))
+          done
+          exit 1

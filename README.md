@@ -277,6 +277,53 @@ jobs:
 | body        | Body for the release PR.                 | &#x2610; |                 | See workflow  |
 | draft       | Whether the release PR should be a draft | &#x2610; | `true`, `false` | `true`        |
 
+## Deployment update
+
+Workflow for deploying a new image to a Kustomize overlay in a GitOps repository (by default [`GEWIS/abc-deployments`](https://github.com/GEWIS/abc-deployments)). It runs `kustomize edit set image` in the overlay and either pushes the change to the deployment branch or opens a pull request for it.
+
+```yaml
+jobs:
+  deploy-test:
+    needs: build
+    uses: GEWIS/actions/.github/workflows/deployment-update.yml@v1
+    with:
+      overlay: "parelpracht/overlays/test"
+      images: '["abc.docker-registry.gewis.nl/crm/parelpracht/client","abc.docker-registry.gewis.nl/crm/parelpracht/server"]'
+      tag: "develop"
+      pin-digest: "true"
+    secrets:
+      APP_CLIENT_ID: ${{ secrets.ABC_DEPLOYMENTS_APP_CLIENT_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.ABC_DEPLOYMENTS_APP_PRIVATE_KEY }}
+      REGISTRY_USERNAME: ${{ secrets.SVC_GH_PARELPRACHT_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.SVC_GH_PARELPRACHT_PWD }}
+```
+
+Pin a moving tag such as `develop` with `pin-digest: "true"`, so every build changes the manifest and Flux rolls out the new image. Release versions are immutable and can be deployed by tag.
+
+### Inputs
+
+| Input name            | Description                                                                                   | Required | Options         | Default value           |
+| --------------------- | --------------------------------------------------------------------------------------------- | -------- | --------------- | ----------------------- |
+| overlay               | Kustomize directory in the deployment repository to update.                                   | &#x2611; |                 |                         |
+| images                | JSON array of image names without tag or digest.                                              | &#x2611; |                 |                         |
+| tag                   | Image tag to deploy.                                                                          | &#x2611; |                 |                         |
+| pin-digest            | Resolve the tag to its current digest and pin that instead of the tag.                        | &#x2610; | `true`, `false` | `false`                 |
+| pull-request          | Keep one pull request per overlay up to date instead of pushing to the deployment branch.     | &#x2610; | `true`, `false` | `false`                 |
+| deployment-repository | Repository containing the deployment manifests.                                               | &#x2610; |                 | `GEWIS/abc-deployments` |
+| deployment-branch     | Branch of the deployment repository to update.                                                | &#x2610; |                 | `main`                  |
+
+### Secrets
+
+| Secret name       | Secret value                                                             |
+| ----------------- | ------------------------------------------------------------------------ |
+| APP_CLIENT_ID     | Client ID of the GitHub App installed on the deployment repository.      |
+| APP_PRIVATE_KEY   | Private key of the GitHub App installed on the deployment repository.    |
+| REGISTRY_USERNAME | Registry username, needed for `pin-digest` on a private registry.        |
+| REGISTRY_PASSWORD | Registry password, needed for `pin-digest` on a private registry.        |
+
+> [!NOTE]
+> The GitHub App needs the `Contents: write` repository permission on the deployment repository, plus `Pull requests: write` when `pull-request` is used. The ABC app credentials are available as the organization secrets `ABC_DEPLOYMENTS_APP_CLIENT_ID` and `ABC_DEPLOYMENTS_APP_PRIVATE_KEY` for repositories that have been granted access.
+
 ## Dependabot auto approve and merge
 
 Reusable workflow for automatically approving Dependabot pull requests and enabling GitHub auto-merge.
