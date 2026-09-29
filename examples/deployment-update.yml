@@ -1,0 +1,25 @@
+# This example is self-validating inside the GEWIS/actions repository.
+# Downstream repositories should replace the local reusable-workflow path
+# with GEWIS/actions/.github/workflows/deployment-update.yml@v1.
+name: Deployment Update
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - develop
+
+jobs:
+  deploy-test:
+    permissions: {}
+    uses: ./.github/workflows/deployment-update.yml
+    with:
+      overlay: "parelpracht/overlays/test"
+      images: '["abc.docker-registry.gewis.nl/crm/parelpracht/client","abc.docker-registry.gewis.nl/crm/parelpracht/server"]'
+      tag: "develop"
+      pin-digest: "true"
+    secrets:
+      APP_CLIENT_ID: ${{ secrets.ABC_DEPLOYMENTS_APP_CLIENT_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.ABC_DEPLOYMENTS_APP_PRIVATE_KEY }}
+      REGISTRY_USERNAME: ${{ secrets.SVC_GH_PARELPRACHT_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.SVC_GH_PARELPRACHT_PWD }}
