@@ -49,6 +49,9 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+    concurrency:
+      group: deployment-update-${{ inputs.deployment-repository }}-${{ inputs.overlay }}
+      cancel-in-progress: false
     permissions: {}
     steps:
       - name: Validate inputs
@@ -131,9 +134,8 @@ jobs:
             echo "${REGISTRY_PASSWORD}" | docker login "${registry}" -u "${REGISTRY_USERNAME}" --password-stdin
           done
 
-      - name: Update images
+      - name: Resolve image references
         env:
-          OVERLAY: ${{ inputs.overlay }}
           IMAGES: ${{ inputs.images }}
           TAG: ${{ inputs.tag }}
           PIN_DIGEST: ${{ inputs.pin-digest }}
@@ -141,12 +143,12 @@ jobs:
           jq -r '.[]' <<< "${IMAGES}" | while read -r image; do
             if [ "${PIN_DIGEST}" = "true" ]; then
               digest="$(docker buildx imagetools inspect "${image}:${TAG}" --format '{{.Manifest.Digest}}')"
-              (cd "${OVERLAY}" && kustomize edit set image "${image}@${digest}")
+              echo "${image}@${digest}"
             else
-              (cd "${OVERLAY}" && kustomize edit set image "${image}:${TAG}")
+              echo "${image}:${TAG}"
             fi
-          done
-          git diff --stat
+          done > "${RUNNER_TEMP}/image-refs"
+          cat "${RUNNER_TEMP}/image-refs"
 
       - name: Publish update
         env:
@@ -159,41 +161,61 @@ jobs:
           DEPLOYMENT_BRANCH: ${{ inputs.deployment-branch }}
           SOURCE_REPOSITORY: ${{ github.repository }}
         run: |
-          UPDATE_BRANCH="deployment-update/$(printf '%s' "${OVERLAY}" | tr '/' '-')"
-          OPEN_PR=""
-          if [ "${PULL_REQUEST}" = "true" ]; then
-            OPEN_PR="$(gh pr list --repo "${DEPLOYMENT_REPOSITORY}" --base "${DEPLOYMENT_BRANCH}" --head "${UPDATE_BRANCH}" --state open --json number --jq '.[0].number // empty')"
-          fi
-
-          if git diff --quiet -- "${OVERLAY}/kustomization.yaml"; then
-            echo "${DEPLOYMENT_BRANCH} already deploys ${TAG} to ${OVERLAY}"
-            if [ -n "${OPEN_PR}" ]; then
-              gh pr close "${OPEN_PR}" --repo "${DEPLOYMENT_REPOSITORY}" --delete-branch --comment "Superseded: ${DEPLOYMENT_BRANCH} already deploys ${TAG}."
-            fi
-            exit 0
-          fi
-
           git config user.name "${APP_SLUG}[bot]"
           git config user.email "$(gh api "/users/${APP_SLUG}%5Bbot%5D" --jq .id)+${APP_SLUG}[bot]@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${DEPLOYMENT_REPOSITORY}.git"
 
-          MESSAGE="chore(${OVERLAY%%/*}): deploy ${TAG} to ${OVERLAY}"
           BODY="Triggered by ${SOURCE_REPOSITORY}@${GITHUB_SHA}."
-          git add "${OVERLAY}/kustomization.yaml"
-          git commit -m "${MESSAGE}" -m "${BODY}"
+
+          reset_to_deployment_branch() {
+            git fetch -q origin "+refs/heads/${DEPLOYMENT_BRANCH}:refs/remotes/origin/${DEPLOYMENT_BRANCH}"
+            git reset -q --hard "origin/${DEPLOYMENT_BRANCH}"
+          }
 
           if [ "${PULL_REQUEST}" = "true" ]; then
-            git push --force origin "HEAD:refs/heads/${UPDATE_BRANCH}"
-            if [ -n "${OPEN_PR}" ]; then
-              gh pr edit "${OPEN_PR}" --repo "${DEPLOYMENT_REPOSITORY}" --title "${MESSAGE}" --body "${BODY}"
-            else
-              gh pr create --repo "${DEPLOYMENT_REPOSITORY}" --base "${DEPLOYMENT_BRANCH}" --head "${UPDATE_BRANCH}" --title "${MESSAGE}" --body "${BODY}"
-            fi
+            while read -r ref <&3; do
+              case "${ref}" in
+                *@*) image="${ref%@*}" ;;
+                *) image="${ref%:*}" ;;
+              esac
+              branch="deployment-update/$(printf '%s' "${OVERLAY}" | tr '/' '-')/$(printf '%s' "${image#*/}" | tr '/' '-')"
+              message="chore(${OVERLAY%%/*}): deploy ${image##*/} ${TAG} to ${OVERLAY}"
+              open_pr="$(gh pr list --repo "${DEPLOYMENT_REPOSITORY}" --base "${DEPLOYMENT_BRANCH}" --head "${branch}" --state open --json number --jq '.[0].number // empty')"
+
+              reset_to_deployment_branch
+              (cd "${OVERLAY}" && kustomize edit set image "${ref}")
+
+              if git diff --quiet -- "${OVERLAY}/kustomization.yaml"; then
+                echo "${DEPLOYMENT_BRANCH} already deploys ${ref}"
+                if [ -n "${open_pr}" ]; then
+                  gh pr close "${open_pr}" --repo "${DEPLOYMENT_REPOSITORY}" --delete-branch --comment "Superseded: ${DEPLOYMENT_BRANCH} already deploys ${ref}."
+                fi
+                continue
+              fi
+
+              git commit -q -m "${message}" -m "${BODY}" -- "${OVERLAY}/kustomization.yaml"
+              git push -q --force origin "HEAD:refs/heads/${branch}"
+              if [ -n "${open_pr}" ]; then
+                gh pr edit "${open_pr}" --repo "${DEPLOYMENT_REPOSITORY}" --title "${message}" --body "${BODY}"
+              else
+                gh pr create --repo "${DEPLOYMENT_REPOSITORY}" --base "${DEPLOYMENT_BRANCH}" --head "${branch}" --title "${message}" --body "${BODY}"
+              fi
+            done 3< "${RUNNER_TEMP}/image-refs"
             exit 0
           fi
 
+          message="chore(${OVERLAY%%/*}): deploy ${TAG} to ${OVERLAY}"
           for attempt in 1 2 3; do
-            git pull --rebase origin "${DEPLOYMENT_BRANCH}" && git push origin "HEAD:${DEPLOYMENT_BRANCH}" && exit 0
+            reset_to_deployment_branch
+            (cd "${OVERLAY}" && xargs kustomize edit set image < "${RUNNER_TEMP}/image-refs")
+
+            if git diff --quiet -- "${OVERLAY}/kustomization.yaml"; then
+              echo "${DEPLOYMENT_BRANCH} already deploys ${TAG} to ${OVERLAY}"
+              exit 0
+            fi
+
+            git commit -q -m "${message}" -m "${BODY}" -- "${OVERLAY}/kustomization.yaml"
+            git push origin "HEAD:${DEPLOYMENT_BRANCH}" && exit 0
             sleep $((attempt * 5))
           done
           exit 1
