@@ -308,7 +308,7 @@ Pin a moving tag such as `develop` with `pin-digest: "true"`, so every build cha
 | images                | JSON array of image names without tag or digest.                                              | &#x2611; |                 |                         |
 | tag                   | Image tag to deploy.                                                                          | &#x2611; |                 |                         |
 | pin-digest            | Resolve the tag to its current digest and pin that instead of the tag.                        | &#x2610; | `true`, `false` | `false`                 |
-| pull-request          | Keep one pull request per overlay up to date instead of pushing to the deployment branch.     | &#x2610; | `true`, `false` | `false`                 |
+| pull-request          | Open one pull request per image instead of pushing; reruns update it, merged changes close it. | &#x2610; | `true`, `false` | `false`                 |
 | deployment-repository | Repository containing the deployment manifests.                                               | &#x2610; |                 | `GEWIS/abc-deployments` |
 | deployment-branch     | Branch of the deployment repository to update.                                                | &#x2610; |                 | `main`                  |
 
